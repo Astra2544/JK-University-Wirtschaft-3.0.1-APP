@@ -23,13 +23,13 @@ import Header from '../components/Header';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 interface Category {
-  id: number;
-  display_name: string;
+  id;
+  display_name;
 }
 
 interface UpdateGroup {
-  name: string;
-  items: { title: string; description: string; date: string }[];
+  name;
+  items: { title; description; date }[];
 }
 
 export default function StudiumScreen() {

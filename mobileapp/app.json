@@ -1,32 +1,26 @@
 {
   "expo": {
     "name": "ÖH Wirtschaft",
-    "slug": "oeh-wirtschaft",
+    "slug": "oeh-wirtschaft-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#3B82F6",
+      "resizeMode": "contain"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "at.oeh.wirtschaft"
+      "bundleIdentifier": "at.oehwirtschaft.app"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#3B82F6"
       },
-      "package": "at.oeh.wirtschaft"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+      "package": "at.oehwirtschaft.app"
     },
     "extra": {
       "apiUrl": "https://mobile-replica-14.preview.emergentagent.com"

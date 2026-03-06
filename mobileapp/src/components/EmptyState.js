@@ -9,8 +9,8 @@ import { Colors } from '../constants/Colors';
 
 interface EmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  description?: string;
+  title;
+  description?;
 }
 
 export default function EmptyState({ icon, title, description }: EmptyStateProps) {

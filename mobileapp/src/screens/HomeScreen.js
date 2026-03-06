@@ -26,8 +26,8 @@ import { QuickLinkCard, StatCard, CtaCard } from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 interface Category {
-  id: number;
-  display_name: string;
+  id;
+  display_name;
 }
 
 export default function HomeScreen() {
@@ -60,7 +60,7 @@ export default function HomeScreen() {
     fetchData();
   };
 
-  const openSocialLink = (url: string) => {
+  const openSocialLink = (url) => {
     Linking.openURL(url);
   };
 

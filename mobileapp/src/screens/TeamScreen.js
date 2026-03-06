@@ -65,14 +65,14 @@ const weitereMitglieder = [
   { name: 'Melanie Derntl', role: 'ÖH Wirtschaft' },
 ];
 
-const colorStyles: Record<string, { bg: string; text: string; badge: string }> = {
+const colorStyles: Record<string, { bg; text; badge }> = {
   purple: { bg: Colors.purple50, text: Colors.purple500, badge: Colors.purple500 },
   blue: { bg: Colors.blue50, text: Colors.blue500, badge: Colors.blue500 },
   gold: { bg: Colors.gold50, text: Colors.gold500, badge: Colors.gold500 },
   pink: { bg: Colors.pink50, text: Colors.pink500, badge: Colors.pink500 },
 };
 
-function getInitials(name: string): string {
+function getInitials(name) {
   return name.split(' ').map((n) => n[0]).join('');
 }
 
@@ -87,7 +87,7 @@ export default function TeamScreen() {
     setTimeout(() => setRefreshing(false), 1000);
   };
 
-  const sendEmail = (email: string) => {
+  const sendEmail = (email) => {
     Linking.openURL(`mailto:${email}`);
   };
 

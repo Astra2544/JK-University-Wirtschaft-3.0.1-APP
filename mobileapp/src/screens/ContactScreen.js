@@ -51,7 +51,7 @@ export default function ContactScreen() {
     Linking.openURL('https://zeeg.me/wirtschaft');
   };
 
-  const openSocialLink = (url: string) => {
+  const openSocialLink = (url) => {
     Linking.openURL(url);
   };
 

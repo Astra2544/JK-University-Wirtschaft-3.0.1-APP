@@ -16,11 +16,11 @@ export const ENDPOINTS = {
   // Events / Calendar
   EVENTS: '/api/events',
   EVENTS_TAGS: '/api/events/tags',
-  EVENT_REGISTER: (id: number) => `/api/events/${id}/register`,
+  EVENT_REGISTER: (id) => `/api/events/${id}/register`,
   
   // Team / Assets
   ASSETS: '/api/assets',
-  ASSET: (key: string) => `/api/assets/${encodeURIComponent(key)}`,
+  ASSET: (key) => `/api/assets/${encodeURIComponent(key)}`,
   
   // Study Programs
   STUDY_CATEGORIES: '/api/study/categories',
@@ -39,7 +39,7 @@ export const ENDPOINTS = {
   
   // Survey
   SURVEY_ACTIVE: '/api/survey/active',
-  SURVEY_SUBMIT: (id: number) => `/api/survey/${id}/submit`,
+  SURVEY_SUBMIT: (id) => `/api/survey/${id}/submit`,
   
   // Site Settings
   SITE_SETTINGS: '/api/site-settings',
@@ -50,7 +50,7 @@ export const ENDPOINTS = {
 
 // Fetch helper with error handling
 export async function apiFetch<T>(
-  endpoint: string,
+  endpoint,
   options?: RequestInit
 ): Promise<T> {
   const url = `${API_URL}${endpoint}`;
@@ -78,7 +78,7 @@ export async function apiFetch<T>(
 
 // FormData fetch for file uploads
 export async function apiFormDataFetch<T>(
-  endpoint: string,
+  endpoint,
   formData: FormData
 ): Promise<T> {
   const url = `${API_URL}${endpoint}`;

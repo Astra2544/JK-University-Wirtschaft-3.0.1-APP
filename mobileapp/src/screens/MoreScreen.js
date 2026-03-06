@@ -21,8 +21,8 @@ import Header from '../components/Header';
 
 interface MenuItemProps {
   icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  subtitle?: string;
+  title;
+  subtitle?;
   onPress: () => void;
   accent?: 'blue' | 'gold' | 'green' | 'purple';
 }
@@ -60,7 +60,7 @@ export default function MoreScreen() {
     i18n.changeLanguage(nextLang);
   };
 
-  const openExternalLink = (url: string) => {
+  const openExternalLink = (url) => {
     Linking.openURL(url);
   };
 

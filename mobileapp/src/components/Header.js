@@ -10,11 +10,11 @@ import { useNavigation } from '@react-navigation/native';
 import { Colors } from '../constants/Colors';
 
 interface HeaderProps {
-  title?: string;
-  subtitle?: string;
-  showBack?: boolean;
+  title?;
+  subtitle?;
+  showBack?;
   rightComponent?: React.ReactNode;
-  transparent?: boolean;
+  transparent?;
 }
 
 export default function Header({ 

@@ -82,12 +82,6 @@ function MoreStack() {
   );
 }
 
-type TabIconProps = {
-  focused: boolean;
-  color: string;
-  size: number;
-};
-
 export function Navigation() {
   const { t } = useTranslation();
 
@@ -107,7 +101,7 @@ export function Navigation() {
           component={HomeStack}
           options={{
             tabBarLabel: t('nav.home'),
-            tabBarIcon: ({ focused, color, size }: TabIconProps) => (
+            tabBarIcon: ({ focused, color }) => (
               <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
             ),
           }}
@@ -117,7 +111,7 @@ export function Navigation() {
           component={NewsStack}
           options={{
             tabBarLabel: t('nav.news'),
-            tabBarIcon: ({ focused, color, size }: TabIconProps) => (
+            tabBarIcon: ({ focused, color }) => (
               <Ionicons name={focused ? 'newspaper' : 'newspaper-outline'} size={22} color={color} />
             ),
           }}
@@ -127,7 +121,7 @@ export function Navigation() {
           component={KalenderStack}
           options={{
             tabBarLabel: t('nav.kalender'),
-            tabBarIcon: ({ focused, color, size }: TabIconProps) => (
+            tabBarIcon: ({ focused, color }) => (
               <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={22} color={color} />
             ),
           }}
@@ -137,7 +131,7 @@ export function Navigation() {
           component={TeamStack}
           options={{
             tabBarLabel: t('nav.team'),
-            tabBarIcon: ({ focused, color, size }: TabIconProps) => (
+            tabBarIcon: ({ focused, color }) => (
               <Ionicons name={focused ? 'people' : 'people-outline'} size={22} color={color} />
             ),
           }}
@@ -147,7 +141,7 @@ export function Navigation() {
           component={MoreStack}
           options={{
             tabBarLabel: t('nav.mehr'),
-            tabBarIcon: ({ focused, color, size }: TabIconProps) => (
+            tabBarIcon: ({ focused, color }) => (
               <Ionicons name={focused ? 'menu' : 'menu-outline'} size={22} color={color} />
             ),
           }}

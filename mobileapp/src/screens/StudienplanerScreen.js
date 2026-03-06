@@ -46,7 +46,7 @@ export default function StudienplanerScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
 
-  const openPlanner = (url: string) => {
+  const openPlanner = (url) => {
     Linking.openURL(url);
   };
 

@@ -23,17 +23,17 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
 
 interface NewsItem {
-  id: number;
-  title: string;
-  content: string;
-  excerpt?: string;
+  id;
+  title;
+  content;
+  excerpt?;
   priority: 'urgent' | 'high' | 'medium' | 'low';
-  color: string;
-  is_pinned: boolean;
-  views: number;
-  author_name: string;
-  published_at: string;
-  created_at: string;
+  color;
+  is_pinned;
+  views;
+  author_name;
+  published_at;
+  created_at;
 }
 
 const priorityIcons = {
@@ -43,7 +43,7 @@ const priorityIcons = {
   low: 'information-circle',
 } as const;
 
-function formatDate(dateString: string, t: any): string {
+function formatDate(dateString, t) {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -59,7 +59,7 @@ function formatDate(dateString: string, t: any): string {
   return date.toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-function NewsCard({ item, t }: { item: NewsItem; t: any }) {
+function NewsCard({ item, t }: { item: NewsItem; t }) {
   const [expanded, setExpanded] = useState(false);
   const priorityConfig = PriorityColors[item.priority] || PriorityColors.medium;
   const priorityIcon = priorityIcons[item.priority] || priorityIcons.medium;

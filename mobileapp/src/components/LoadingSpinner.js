@@ -8,9 +8,9 @@ import { Colors } from '../constants/Colors';
 
 interface LoadingSpinnerProps {
   size?: 'small' | 'large';
-  color?: string;
-  text?: string;
-  fullScreen?: boolean;
+  color?;
+  text?;
+  fullScreen?;
 }
 
 export default function LoadingSpinner({ 

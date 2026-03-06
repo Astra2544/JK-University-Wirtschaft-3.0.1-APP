@@ -25,13 +25,13 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
 
 interface LVA {
-  id: number;
-  name: string;
-  professor?: string;
-  avg_effort: number;
-  avg_difficulty: number;
-  avg_rating: number;
-  rating_count: number;
+  id;
+  name;
+  professor?;
+  avg_effort;
+  avg_difficulty;
+  avg_rating;
+  rating_count;
 }
 
 interface TopLVAs {
@@ -66,7 +66,7 @@ export default function LVAScreen() {
     }
   };
 
-  const searchLVAs = async (query: string) => {
+  const searchLVAs = async (query) => {
     if (query.length < 2) {
       setSearchResults([]);
       return;
@@ -89,12 +89,12 @@ export default function LVAScreen() {
     fetchTopLVAs();
   };
 
-  const handleSearch = (text: string) => {
+  const handleSearch = (text) => {
     setSearchQuery(text);
     searchLVAs(text);
   };
 
-  const renderRating = (value: number, label: string) => (
+  const renderRating = (value, label) => (
     <View style={styles.ratingItem}>
       <Text style={styles.ratingValue}>{value.toFixed(1)}</Text>
       <Text style={styles.ratingLabel}>{label}</Text>

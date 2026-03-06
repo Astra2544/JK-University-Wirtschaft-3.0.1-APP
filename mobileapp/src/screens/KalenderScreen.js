@@ -26,19 +26,19 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
 
 interface Event {
-  id: number;
-  title: string;
-  description?: string;
-  start_date: string;
-  end_date?: string;
-  location?: string;
-  all_day: boolean;
-  color: string;
-  tags?: string;
-  registration_required?: boolean;
-  registration_count?: number;
-  max_participants?: number;
-  registration_open?: boolean;
+  id;
+  title;
+  description?;
+  start_date;
+  end_date?;
+  location?;
+  all_day;
+  color;
+  tags?;
+  registration_required?;
+  registration_count?;
+  max_participants?;
+  registration_open?;
 }
 
 export default function KalenderScreen() {
@@ -77,7 +77,7 @@ export default function KalenderScreen() {
     fetchEvents();
   };
 
-  const navigateMonth = (direction: number) => {
+  const navigateMonth = (direction) => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
       newDate.setMonth(prev.getMonth() + direction);
@@ -91,12 +91,12 @@ export default function KalenderScreen() {
 
   const dateLocale = i18n.language === 'en' ? 'en-GB' : 'de-DE';
 
-  const formatTime = (dateStr: string) => {
+  const formatTime = (dateStr) => {
     const date = new Date(dateStr);
     return date.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' });
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString(dateLocale, {
       weekday: 'long',
@@ -110,7 +110,7 @@ export default function KalenderScreen() {
     return [...events].sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
   }, [events]);
 
-  const getColorConfig = (color: string) => {
+  const getColorConfig = (color) => {
     return EventColorMap[color as keyof typeof EventColorMap] || EventColorMap.blue;
   };
 

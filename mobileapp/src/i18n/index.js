@@ -37,7 +37,7 @@ export const initI18n = async () => {
     });
 };
 
-export const changeLanguage = async (lang: string) => {
+export const changeLanguage = async (lang) => {
   await i18n.changeLanguage(lang);
   try {
     await AsyncStorage.setItem('lang', lang);

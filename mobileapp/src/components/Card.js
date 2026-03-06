@@ -9,8 +9,8 @@ import { Colors } from '../constants/Colors';
 
 interface QuickLinkCardProps {
   icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  subtitle: string;
+  title;
+  subtitle;
   accent: 'blue' | 'gold';
   onPress: () => void;
 }
@@ -29,8 +29,8 @@ export function QuickLinkCard({ icon, title, subtitle, accent, onPress }: QuickL
 }
 
 interface StatCardProps {
-  value: string;
-  label: string;
+  value;
+  label;
   accent: 'blue' | 'gold';
 }
 
@@ -59,9 +59,9 @@ export function InfoCard({ children, style }: InfoCardProps) {
 }
 
 interface CtaCardProps {
-  title: string;
-  description: string;
-  buttonText: string;
+  title;
+  description;
+  buttonText;
   onPress: () => void;
   variant?: 'blue' | 'gold';
 }

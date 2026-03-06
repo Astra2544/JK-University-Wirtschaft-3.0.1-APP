@@ -8,11 +8,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
 
 interface SectionHeaderProps {
-  title: string;
-  subtitle?: string;
+  title;
+  subtitle?;
   accent?: 'blue' | 'gold';
   action?: {
-    label: string;
+    label;
     onPress: () => void;
   };
 }
