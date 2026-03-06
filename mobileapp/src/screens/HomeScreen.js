@@ -1,6 +1,5 @@
 /**
  * HomeScreen - Startseite der ÖH Wirtschaft App
- * 1:1 Kopie der Website Homepage
  */
 
 import React, { useEffect, useState } from 'react';
@@ -17,24 +16,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 
 import { Colors } from '../constants/Colors';
-import { API_URL, apiFetch, ENDPOINTS } from '../constants/Api';
+import { apiFetch, ENDPOINTS } from '../constants/Api';
 import SectionHeader from '../components/SectionHeader';
 import { QuickLinkCard, StatCard, CtaCard } from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
 
-interface Category {
-  id;
-  display_name;
-}
-
 export default function HomeScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<any>();
-  const [categories, setCategories] = useState<Category[]>([]);
+  const navigation = useNavigation();
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -44,8 +37,8 @@ export default function HomeScreen() {
 
   const fetchData = async () => {
     try {
-      const data = await apiFetch<Category[]>(ENDPOINTS.STUDY_CATEGORIES);
-      setCategories(data);
+      const data = await apiFetch(ENDPOINTS.STUDY_CATEGORIES);
+      setCategories(data || []);
     } catch (err) {
       console.error('Error fetching categories:', err);
       setCategories([]);
@@ -65,10 +58,10 @@ export default function HomeScreen() {
   };
 
   const quickLinks = [
-    { icon: 'people-outline' as const, title: t('home.cards.team.label'), subtitle: t('home.cards.team.sub'), accent: 'blue' as const, screen: 'Team' },
-    { icon: 'book-outline' as const, title: t('home.cards.studium.label'), subtitle: t('home.cards.studium.sub'), accent: 'gold' as const, screen: 'Studium' },
-    { icon: 'chatbubble-outline' as const, title: t('home.cards.kontakt.label'), subtitle: t('home.cards.kontakt.sub'), accent: 'blue' as const, screen: 'Contact' },
-    { icon: 'newspaper-outline' as const, title: t('home.cards.magazine.label'), subtitle: t('home.cards.magazine.sub'), accent: 'gold' as const, screen: 'Magazine' },
+    { icon: 'people-outline', title: t('home.cards.team.label'), subtitle: t('home.cards.team.sub'), accent: 'blue', screen: 'Team' },
+    { icon: 'book-outline', title: t('home.cards.studium.label'), subtitle: t('home.cards.studium.sub'), accent: 'gold', screen: 'Studium' },
+    { icon: 'chatbubble-outline', title: t('home.cards.kontakt.label'), subtitle: t('home.cards.kontakt.sub'), accent: 'blue', screen: 'Contact' },
+    { icon: 'newspaper-outline', title: t('home.cards.magazine.label'), subtitle: t('home.cards.magazine.sub'), accent: 'gold', screen: 'Magazine' },
   ];
 
   return (
@@ -83,21 +76,17 @@ export default function HomeScreen() {
       {/* Hero Section */}
       <View style={[styles.heroSection, { paddingTop: insets.top + 16 }]}>
         <View style={styles.heroContent}>
-          {/* Subtitle */}
           <View style={styles.subtitleRow}>
             <View style={styles.subtitleDot} />
             <Text style={styles.subtitleText}>{t('home.subtitle')}</Text>
           </View>
 
-          {/* Title */}
           <Text style={styles.heroTitle}>
             {t('home.title')} <Text style={styles.heroHighlight}>{t('home.titleHighlight')}</Text>
           </Text>
 
-          {/* Description */}
           <Text style={styles.heroDescription}>{t('home.desc')}</Text>
 
-          {/* CTA Buttons */}
           <View style={styles.ctaRow}>
             <TouchableOpacity
               style={styles.ctaPrimary}
@@ -114,7 +103,6 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Social Links */}
           <View style={styles.socialRow}>
             <TouchableOpacity
               style={styles.socialIcon}
@@ -134,66 +122,42 @@ export default function HomeScreen() {
             >
               <Ionicons name="mail-outline" size={20} color={Colors.slate400} />
             </TouchableOpacity>
-            <View style={styles.socialDivider} />
-            <TouchableOpacity
-              style={styles.oehBadge}
-              onPress={() => openSocialLink('https://oeh.jku.at/wirtschaft')}
-            >
-              <View style={styles.oehIcon}>
-                <Text style={styles.oehIconText}>ÖH</Text>
-              </View>
-              <Text style={styles.oehBadgeText}>ÖH JKU</Text>
-              <Ionicons name="arrow-forward" size={12} color={Colors.slate600} />
-            </TouchableOpacity>
           </View>
         </View>
       </View>
 
       {/* Quick Links Section */}
       <View style={styles.section}>
-        <SectionHeader title="" subtitle={t('home.quickLinks')} accent="gold" />
-        <View style={styles.quickLinksGrid}>
-          {quickLinks.slice(0, 2).map((link, index) => (
-            <QuickLinkCard
-              key={index}
-              icon={link.icon}
-              title={link.title}
-              subtitle={link.subtitle}
-              accent={link.accent}
-              onPress={() => {
-                if (link.screen === 'Team') {
-                  navigation.navigate('Team');
-                } else {
-                  navigation.navigate('More', { screen: link.screen });
-                }
-              }}
-            />
-          ))}
-        </View>
-        <View style={[styles.quickLinksGrid, { marginTop: 8 }]}>
-          {quickLinks.slice(2, 4).map((link, index) => (
-            <QuickLinkCard
-              key={index}
-              icon={link.icon}
-              title={link.title}
-              subtitle={link.subtitle}
-              accent={link.accent}
-              onPress={() => navigation.navigate('More', { screen: link.screen })}
-            />
-          ))}
-        </View>
+        <SectionHeader title={t('home.quickLinks')} />
+        {quickLinks.map((link, index) => (
+          <QuickLinkCard
+            key={index}
+            icon={link.icon}
+            title={link.title}
+            subtitle={link.subtitle}
+            accent={link.accent}
+            onPress={() => {
+              if (link.screen === 'Team') {
+                navigation.navigate('Team');
+              } else {
+                navigation.navigate('More', { screen: link.screen });
+              }
+            }}
+          />
+        ))}
       </View>
 
       {/* About Section */}
       <View style={styles.section}>
-        <SectionHeader title={t('home.aboutTitle')} subtitle={t('home.about')} accent="blue" />
+        <SectionHeader section={t('home.about')} title={t('home.aboutTitle')} />
         <Text style={styles.bodyText}>{t('home.aboutP1')}</Text>
         <Text style={[styles.bodyText, { marginTop: 8 }]}>{t('home.aboutP2')}</Text>
 
-        {/* Stats Grid */}
         <View style={styles.statsGrid}>
           <StatCard value="3500+" label={t('home.stats.students')} accent="blue" />
           <StatCard value="30+" label={t('home.stats.members')} accent="gold" />
+        </View>
+        <View style={[styles.statsGrid, { marginTop: 8 }]}>
           <StatCard value="20+" label={t('home.stats.programs')} accent="blue" />
           <StatCard value="1" label={t('home.stats.mission')} accent="gold" />
         </View>
@@ -219,7 +183,7 @@ export default function HomeScreen() {
 
       {/* Programs Section */}
       <View style={styles.section}>
-        <SectionHeader title={t('home.programsTitle')} subtitle={t('home.programs')} accent="gold" />
+        <SectionHeader section={t('home.programs')} title={t('home.programsTitle')} />
         <Text style={styles.bodyText}>{t('home.programsSub')}</Text>
 
         {loading ? (
@@ -228,7 +192,7 @@ export default function HomeScreen() {
           <View style={styles.categoriesGrid}>
             {categories.map((cat, index) => (
               <View
-                key={cat.id}
+                key={cat.id || index}
                 style={[
                   styles.categoryCard,
                   { borderColor: index % 2 === 0 ? Colors.blue100 : Colors.gold100 },
@@ -262,7 +226,7 @@ export default function HomeScreen() {
       </View>
 
       {/* CTA Section */}
-      <View style={{ marginVertical: 24 }}>
+      <View style={styles.ctaSection}>
         <CtaCard
           title={t('home.ctaTitle')}
           description={t('home.ctaDesc')}
@@ -308,7 +272,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.slate900,
     lineHeight: 38,
-    letterSpacing: -0.5,
     marginBottom: 12,
   },
   heroHighlight: {
@@ -323,7 +286,6 @@ const styles = StyleSheet.create({
   ctaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
     marginBottom: 20,
   },
   ctaPrimary: {
@@ -333,12 +295,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 24,
-    gap: 6,
+    marginRight: 8,
   },
   ctaPrimaryText: {
     color: Colors.white,
     fontWeight: '600',
     fontSize: 14,
+    marginRight: 6,
   },
   ctaSecondary: {
     paddingVertical: 12,
@@ -355,55 +318,16 @@ const styles = StyleSheet.create({
   socialRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
   },
   socialIcon: {
-    padding: 4,
-  },
-  socialDivider: {
-    width: 1,
-    height: 20,
-    backgroundColor: Colors.slate200,
-    marginHorizontal: 4,
-  },
-  oehBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.slate100,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: Colors.slate200,
-  },
-  oehIcon: {
-    width: 16,
-    height: 16,
-    borderRadius: 4,
-    backgroundColor: Colors.blue500,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  oehIconText: {
-    color: Colors.white,
-    fontSize: 7,
-    fontWeight: '700',
-  },
-  oehBadgeText: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: Colors.slate600,
+    padding: 8,
+    marginRight: 8,
   },
   section: {
     paddingHorizontal: 16,
     paddingVertical: 20,
     backgroundColor: Colors.slate50,
     marginBottom: 8,
-  },
-  quickLinksGrid: {
-    flexDirection: 'row',
-    gap: 8,
   },
   bodyText: {
     fontSize: 14,
@@ -412,7 +336,6 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: 8,
     marginTop: 16,
   },
   lvaBanner: {
@@ -455,17 +378,16 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
-    gap: 4,
   },
   lvaBannerButtonText: {
     color: Colors.white,
     fontSize: 12,
     fontWeight: '600',
+    marginRight: 4,
   },
   categoriesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
     marginTop: 16,
   },
   categoryCard: {
@@ -475,6 +397,8 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
+    marginRight: '2%',
+    marginBottom: 8,
   },
   categoryIcon: {
     width: 48,
@@ -498,7 +422,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 24,
-    gap: 6,
     marginTop: 16,
     alignSelf: 'center',
   },
@@ -506,5 +429,10 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 14,
     fontWeight: '600',
+    marginRight: 6,
+  },
+  ctaSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 24,
   },
 });

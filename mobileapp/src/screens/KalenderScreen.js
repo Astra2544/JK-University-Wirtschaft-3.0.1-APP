@@ -1,6 +1,5 @@
 /**
  * KalenderScreen - Events & Termine
- * 1:1 Kopie der Website Kalender-Seite
  */
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -12,46 +11,29 @@ import {
   TouchableOpacity,
   RefreshControl,
   Modal,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 
-import { Colors, EventColorMap } from '../constants/Colors';
-import { API_URL, apiFetch, ENDPOINTS } from '../constants/Api';
+import { Colors } from '../constants/Colors';
+import { apiFetch, ENDPOINTS } from '../constants/Api';
 import Header from '../components/Header';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
 
-interface Event {
-  id;
-  title;
-  description?;
-  start_date;
-  end_date?;
-  location?;
-  all_day;
-  color;
-  tags?;
-  registration_required?;
-  registration_count?;
-  max_participants?;
-  registration_open?;
-}
-
 export default function KalenderScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
-  const monthNames = t('kalender.months', { returnObjects: true }) as string[];
-  const dayNames = t('kalender.days', { returnObjects: true }) as string[];
+  const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+  const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
   useEffect(() => {
     fetchEvents();
@@ -61,7 +43,7 @@ export default function KalenderScreen() {
     try {
       const month = currentDate.getMonth() + 1;
       const year = currentDate.getFullYear();
-      const data = await apiFetch<Event[]>(`${ENDPOINTS.EVENTS}?month=${month}&year=${year}`);
+      const data = await apiFetch(`${ENDPOINTS.EVENTS}?month=${month}&year=${year}`);
       setEvents(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching events:', err);
@@ -78,208 +60,182 @@ export default function KalenderScreen() {
   };
 
   const navigateMonth = (direction) => {
-    setCurrentDate((prev) => {
-      const newDate = new Date(prev);
-      newDate.setMonth(prev.getMonth() + direction);
-      return newDate;
-    });
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() + direction);
+    setCurrentDate(newDate);
+    setLoading(true);
   };
 
-  const goToToday = () => {
-    setCurrentDate(new Date());
-  };
+  const calendarDays = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const days = [];
 
-  const dateLocale = i18n.language === 'en' ? 'en-GB' : 'de-DE';
+    for (let i = 0; i < firstDay; i++) {
+      days.push({ day: null, events: [] });
+    }
 
-  const formatTime = (dateStr) => {
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' });
-  };
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayEvents = events.filter((event) => {
+        const eventDate = new Date(event.start_date);
+        return eventDate.getDate() === day && eventDate.getMonth() === month;
+      });
+      days.push({ day, events: dayEvents });
+    }
 
-  const formatDate = (dateStr) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString(dateLocale, {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  };
+    return days;
+  }, [currentDate, events]);
 
-  const sortedEvents = useMemo(() => {
-    return [...events].sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
-  }, [events]);
-
-  const getColorConfig = (color) => {
-    return EventColorMap[color as keyof typeof EventColorMap] || EventColorMap.blue;
+  const formatEventTime = (event) => {
+    if (event.all_day) return t('kalender.allDay');
+    const start = new Date(event.start_date);
+    return start.toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
     <View style={styles.container}>
       <Header title={t('kalender.title')} subtitle={t('kalender.section')} />
 
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.blue500]} />
-        }
-      >
-        {/* Description */}
-        <Text style={styles.description}>{t('kalender.desc')}</Text>
+      {/* Month Navigation */}
+      <View style={styles.monthNav}>
+        <TouchableOpacity onPress={() => navigateMonth(-1)} style={styles.navButton}>
+          <Ionicons name="chevron-back" size={24} color={Colors.slate700} />
+        </TouchableOpacity>
+        <Text style={styles.monthTitle}>
+          {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+        </Text>
+        <TouchableOpacity onPress={() => navigateMonth(1)} style={styles.navButton}>
+          <Ionicons name="chevron-forward" size={24} color={Colors.slate700} />
+        </TouchableOpacity>
+      </View>
 
-        {/* Month Navigation */}
-        <View style={styles.monthNav}>
-          <TouchableOpacity style={styles.navButton} onPress={() => navigateMonth(-1)}>
-            <Ionicons name="chevron-back" size={20} color={Colors.slate700} />
-          </TouchableOpacity>
-          <Text style={styles.monthTitle}>
-            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-          </Text>
-          <TouchableOpacity style={styles.navButton} onPress={() => navigateMonth(1)}>
-            <Ionicons name="chevron-forward" size={20} color={Colors.slate700} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.todayButton} onPress={goToToday}>
-            <Text style={styles.todayText}>{t('kalender.today')}</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Day Headers */}
+      <View style={styles.dayHeaders}>
+        {dayNames.map((day, index) => (
+          <Text key={index} style={styles.dayHeader}>{day}</Text>
+        ))}
+      </View>
 
-        {/* Events List */}
-        {loading ? (
-          <LoadingSpinner />
-        ) : sortedEvents.length === 0 ? (
-          <EmptyState
-            icon="calendar-outline"
-            title={t('kalender.noEvents')}
-          />
-        ) : (
-          <View style={styles.eventsList}>
-            {sortedEvents.map((event) => {
-              const colorConfig = getColorConfig(event.color);
-              return (
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.blue500]} />
+          }
+        >
+          {/* Calendar Grid */}
+          <View style={styles.calendarGrid}>
+            {calendarDays.map((item, index) => (
+              <View key={index} style={styles.dayCell}>
+                {item.day && (
+                  <>
+                    <Text style={[
+                      styles.dayNumber,
+                      new Date().getDate() === item.day && 
+                      new Date().getMonth() === currentDate.getMonth() && 
+                      styles.today
+                    ]}>
+                      {item.day}
+                    </Text>
+                    {item.events.slice(0, 2).map((event, i) => (
+                      <TouchableOpacity
+                        key={i}
+                        style={[styles.eventDot, { backgroundColor: event.color || Colors.blue500 }]}
+                        onPress={() => setSelectedEvent(event)}
+                      >
+                        <Text style={styles.eventDotText} numberOfLines={1}>
+                          {event.title}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                    {item.events.length > 2 && (
+                      <Text style={styles.moreEvents}>+{item.events.length - 2}</Text>
+                    )}
+                  </>
+                )}
+              </View>
+            ))}
+          </View>
+
+          {/* Upcoming Events List */}
+          <View style={styles.upcomingSection}>
+            <Text style={styles.sectionTitle}>{t('kalender.upcoming')}</Text>
+            {events.length === 0 ? (
+              <EmptyState icon="calendar-outline" title={t('kalender.noEvents')} />
+            ) : (
+              events.slice(0, 5).map((event) => (
                 <TouchableOpacity
                   key={event.id}
-                  style={[styles.eventCard, { borderLeftColor: colorConfig.dot }]}
+                  style={styles.eventCard}
                   onPress={() => setSelectedEvent(event)}
                 >
-                  <View style={[styles.eventDot, { backgroundColor: colorConfig.dot }]} />
-                  <View style={styles.eventContent}>
-                    <View style={styles.eventHeader}>
-                      <Text style={styles.eventTitle}>{event.title}</Text>
-                      {event.registration_required && (
-                        <View style={styles.registrationBadge}>
-                          <Ionicons name="person-add" size={10} color={Colors.blue600} />
-                        </View>
-                      )}
-                    </View>
-                    <View style={styles.eventMeta}>
-                      <Ionicons name="time-outline" size={14} color={Colors.slate400} />
-                      <Text style={styles.eventMetaText}>
-                        {event.all_day ? t('kalender.allDay') : formatTime(event.start_date)}
-                      </Text>
-                      <Text style={styles.eventDate}>{formatDate(event.start_date)}</Text>
-                    </View>
+                  <View style={[styles.eventColor, { backgroundColor: event.color || Colors.blue500 }]} />
+                  <View style={styles.eventInfo}>
+                    <Text style={styles.eventTitle}>{event.title}</Text>
+                    <Text style={styles.eventTime}>
+                      {new Date(event.start_date).toLocaleDateString('de-AT')} • {formatEventTime(event)}
+                    </Text>
                     {event.location && (
-                      <View style={styles.eventMeta}>
+                      <View style={styles.locationRow}>
                         <Ionicons name="location-outline" size={14} color={Colors.slate400} />
-                        <Text style={styles.eventMetaText}>{event.location}</Text>
-                      </View>
-                    )}
-                    {event.registration_required && (
-                      <View style={styles.eventMeta}>
-                        <Ionicons name="people-outline" size={14} color={Colors.slate400} />
-                        <Text style={styles.eventMetaText}>
-                          {event.registration_count || 0}
-                          {event.max_participants ? `/${event.max_participants}` : ''} Teilnehmer
-                        </Text>
-                      </View>
-                    )}
-                    {event.tags && (
-                      <View style={styles.tagsRow}>
-                        {event.tags.split(',').map((tag, i) => (
-                          <View key={i} style={styles.tag}>
-                            <Text style={styles.tagText}>{tag.trim()}</Text>
-                          </View>
-                        ))}
+                        <Text style={styles.eventLocation}>{event.location}</Text>
                       </View>
                     )}
                   </View>
+                  <Ionicons name="chevron-forward" size={20} color={Colors.slate300} />
                 </TouchableOpacity>
-              );
-            })}
+              ))
+            )}
           </View>
-        )}
-      </ScrollView>
+        </ScrollView>
+      )}
 
       {/* Event Detail Modal */}
-      <Modal
-        visible={!!selectedEvent}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setSelectedEvent(null)}
-      >
-        {selectedEvent && (
-          <View style={styles.modalContainer}>
-            <View style={[styles.modalHeader, { backgroundColor: getColorConfig(selectedEvent.color).bg }]}>
-              <View style={styles.modalHeaderContent}>
+      <Modal visible={!!selectedEvent} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {selectedEvent && (
+              <>
+                <View style={styles.modalHeader}>
+                  <View style={[styles.modalColor, { backgroundColor: selectedEvent.color || Colors.blue500 }]} />
+                  <TouchableOpacity onPress={() => setSelectedEvent(null)} style={styles.closeButton}>
+                    <Ionicons name="close" size={24} color={Colors.slate700} />
+                  </TouchableOpacity>
+                </View>
                 <Text style={styles.modalTitle}>{selectedEvent.title}</Text>
-                <Text style={styles.modalDate}>{formatDate(selectedEvent.start_date)}</Text>
-              </View>
-              <TouchableOpacity style={styles.modalClose} onPress={() => setSelectedEvent(null)}>
-                <Ionicons name="close" size={20} color={Colors.slate700} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalBody}>
-              <View style={styles.modalSection}>
-                <View style={styles.modalRow}>
-                  <Ionicons name="time-outline" size={18} color={Colors.slate400} />
-                  <Text style={styles.modalText}>
-                    {selectedEvent.all_day
-                      ? t('kalender.allDay')
-                      : `${formatTime(selectedEvent.start_date)}${selectedEvent.end_date ? ` - ${formatTime(selectedEvent.end_date)}` : ''}`}
+                <View style={styles.modalInfo}>
+                  <Ionicons name="calendar-outline" size={18} color={Colors.slate500} />
+                  <Text style={styles.modalInfoText}>
+                    {new Date(selectedEvent.start_date).toLocaleDateString('de-AT', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
                   </Text>
                 </View>
-
+                <View style={styles.modalInfo}>
+                  <Ionicons name="time-outline" size={18} color={Colors.slate500} />
+                  <Text style={styles.modalInfoText}>{formatEventTime(selectedEvent)}</Text>
+                </View>
                 {selectedEvent.location && (
-                  <View style={styles.modalRow}>
-                    <Ionicons name="location-outline" size={18} color={Colors.slate400} />
-                    <Text style={styles.modalText}>{selectedEvent.location}</Text>
+                  <View style={styles.modalInfo}>
+                    <Ionicons name="location-outline" size={18} color={Colors.slate500} />
+                    <Text style={styles.modalInfoText}>{selectedEvent.location}</Text>
                   </View>
                 )}
-
-                {selectedEvent.registration_required && (
-                  <View style={styles.modalRow}>
-                    <Ionicons name="people-outline" size={18} color={Colors.slate400} />
-                    <Text style={styles.modalText}>
-                      {selectedEvent.registration_count || 0}
-                      {selectedEvent.max_participants ? ` / ${selectedEvent.max_participants}` : ''} Teilnehmer
-                    </Text>
-                  </View>
-                )}
-
                 {selectedEvent.description && (
                   <Text style={styles.modalDescription}>{selectedEvent.description}</Text>
                 )}
-
-                {selectedEvent.tags && (
-                  <View style={styles.modalTags}>
-                    {selectedEvent.tags.split(',').map((tag, i) => (
-                      <View key={i} style={styles.tag}>
-                        <Text style={styles.tagText}>{tag.trim()}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-
-              <TouchableOpacity style={styles.calendarButton}>
-                <Ionicons name="download-outline" size={18} color={Colors.white} />
-                <Text style={styles.calendarButtonText}>{t('kalender.saveToCalendar')}</Text>
-              </TouchableOpacity>
-            </ScrollView>
+              </>
+            )}
           </View>
-        )}
+        </View>
       </Modal>
     </View>
   );
@@ -290,198 +246,181 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.white,
   },
-  description: {
-    fontSize: 15,
-    color: Colors.slate500,
-    lineHeight: 22,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-  },
   monthNav: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    gap: 8,
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.slate100,
   },
   navButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.slate200,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
   },
   monthTitle: {
-    flex: 1,
     fontSize: 18,
     fontWeight: '700',
     color: Colors.slate900,
-    textAlign: 'center',
   },
-  todayButton: {
+  dayHeaders: {
+    flexDirection: 'row',
+    backgroundColor: Colors.slate50,
     paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: Colors.blue50,
-    borderRadius: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.slate100,
   },
-  todayText: {
-    fontSize: 13,
+  dayHeader: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 12,
     fontWeight: '600',
-    color: Colors.blue600,
+    color: Colors.slate500,
   },
-  eventsList: {
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 4,
+  },
+  dayCell: {
+    width: '14.28%',
+    minHeight: 80,
+    padding: 4,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
+    borderColor: Colors.slate100,
+  },
+  dayNumber: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.slate700,
+    marginBottom: 4,
+  },
+  today: {
+    backgroundColor: Colors.blue500,
+    color: Colors.white,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    textAlign: 'center',
+    lineHeight: 24,
+    overflow: 'hidden',
+  },
+  eventDot: {
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginBottom: 2,
+  },
+  eventDotText: {
+    fontSize: 9,
+    color: Colors.white,
+    fontWeight: '500',
+  },
+  moreEvents: {
+    fontSize: 10,
+    color: Colors.slate400,
+    fontWeight: '500',
+  },
+  upcomingSection: {
     padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.slate900,
+    marginBottom: 16,
   },
   eventCard: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.white,
     borderRadius: 12,
-    marginBottom: 12,
     padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: Colors.slate100,
-    borderLeftWidth: 4,
   },
-  eventDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  eventColor: {
+    width: 4,
+    height: '100%',
+    borderRadius: 2,
     marginRight: 12,
-    marginTop: 4,
+    minHeight: 48,
   },
-  eventContent: {
+  eventInfo: {
     flex: 1,
-  },
-  eventHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
   },
   eventTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: Colors.slate900,
-    flex: 1,
-  },
-  registrationBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: Colors.blue100,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  eventMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
     marginBottom: 4,
   },
-  eventMetaText: {
+  eventTime: {
     fontSize: 13,
     color: Colors.slate500,
   },
-  eventDate: {
-    fontSize: 12,
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  eventLocation: {
+    fontSize: 13,
     color: Colors.slate400,
     marginLeft: 4,
   },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 8,
-  },
-  tag: {
-    backgroundColor: Colors.slate100,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-  },
-  tagText: {
-    fontSize: 11,
-    color: Colors.slate600,
-  },
-  // Modal
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
     backgroundColor: Colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
-    padding: 20,
-    paddingTop: 60,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  modalHeaderContent: {
-    flex: 1,
+  modalColor: {
+    width: 48,
+    height: 6,
+    borderRadius: 3,
+  },
+  closeButton: {
+    padding: 4,
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
     color: Colors.slate900,
-    marginBottom: 8,
+    marginBottom: 16,
   },
-  modalDate: {
-    fontSize: 14,
-    color: Colors.slate600,
-  },
-  modalClose: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBody: {
-    flex: 1,
-    padding: 20,
-  },
-  modalSection: {
-    marginBottom: 20,
-  },
-  modalRow: {
+  modalInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
     marginBottom: 12,
   },
-  modalText: {
+  modalInfoText: {
     fontSize: 15,
     color: Colors.slate600,
+    marginLeft: 12,
   },
   modalDescription: {
     fontSize: 15,
     color: Colors.slate600,
-    lineHeight: 22,
-    marginTop: 12,
-    paddingTop: 12,
+    lineHeight: 24,
+    marginTop: 16,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: Colors.slate100,
-  },
-  modalTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 16,
-  },
-  calendarButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.blue500,
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 8,
-    marginTop: 16,
-  },
-  calendarButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.white,
   },
 });

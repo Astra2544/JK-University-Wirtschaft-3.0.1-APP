@@ -49,10 +49,7 @@ export const ENDPOINTS = {
 };
 
 // Fetch helper with error handling
-export async function apiFetch<T>(
-  endpoint,
-  options?: RequestInit
-): Promise<T> {
+export async function apiFetch(endpoint, options) {
   const url = `${API_URL}${endpoint}`;
   
   try {
@@ -77,10 +74,7 @@ export async function apiFetch<T>(
 }
 
 // FormData fetch for file uploads
-export async function apiFormDataFetch<T>(
-  endpoint,
-  formData: FormData
-): Promise<T> {
+export async function apiFormDataFetch(endpoint, formData) {
   const url = `${API_URL}${endpoint}`;
   
   try {

@@ -1,6 +1,5 @@
 /**
  * ContactScreen - Kontakt & FAQ
- * 1:1 Kopie der Website Contact-Seite
  */
 
 import React, { useState } from 'react';
@@ -9,78 +8,45 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   TextInput,
+  TouchableOpacity,
   Linking,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Colors } from '../constants/Colors';
-import { API_URL, ENDPOINTS } from '../constants/Api';
+import { apiFetch, ENDPOINTS } from '../constants/Api';
 import Header from '../components/Header';
-
-// FAQ Data
-const faqData = [
-  { q: 'Welchen Taschenrechner brauche ich?', a: 'Für dein Studium reicht ein einfacher, wissenschaftlicher Taschenrechner (kein programmierbarer Grafikrechner). Viele Studierende verwenden z.B. den Texas Instruments TI-30Xa.' },
-  { q: 'Wie borge ich ein Buch aus?', a: 'Als JKU-Studierender kannst du ganz einfach Bücher in der Universitätsbibliothek ausleihen. Deine JKU Card ist zugleich deine Bibliothekskarte.' },
-  { q: 'Gibt es eine kostenfreie Lizenz für Microsoft 365?', a: 'Ja! Als JKU-Studierende:r bekommst du Microsoft Office 365 gratis. Du kannst die Software auf bis zu 5 Geräten gleichzeitig installieren.' },
-  { q: 'Wie funktioniert ein Auslandssemester?', a: 'Ein Auslandssemester planst du am besten über die Austauschprogramme der JKU. Die JKU hat rund 200 Partneruniversitäten weltweit.' },
-];
 
 export default function ContactScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     name: '',
     email: '',
-    message: '',
+    studium: '',
+    anliegen: '',
+    nachricht: '',
   });
   const [sending, setSending] = useState(false);
 
-  const openEmail = () => {
-    Linking.openURL('mailto:wirtschaft@oeh.jku.at');
-  };
-
-  const openSprechstunde = () => {
-    Linking.openURL('https://zeeg.me/wirtschaft');
-  };
-
-  const openSocialLink = (url) => {
-    Linking.openURL(url);
-  };
-
   const handleSubmit = async () => {
-    if (!formData.name || !formData.email || !formData.message) {
-      Alert.alert('Fehler', 'Bitte fülle alle Felder aus.');
+    if (!form.name || !form.email || !form.nachricht) {
+      Alert.alert('Fehler', 'Bitte fülle alle Pflichtfelder aus.');
       return;
     }
 
     setSending(true);
     try {
-      const body = new FormData();
-      body.append('name', formData.name);
-      body.append('email', formData.email);
-      body.append('anliegen', 'Sonstiges');
-      body.append('beschreibung', formData.message);
-      body.append('studium', 'Nicht angegeben');
-
-      const response = await fetch(`${API_URL}${ENDPOINTS.CONTACT}`, {
+      await apiFetch(ENDPOINTS.CONTACT, {
         method: 'POST',
-        body,
+        body: JSON.stringify(form),
       });
-
-      if (response.ok) {
-        Alert.alert('Erfolg', t('contact.success'));
-        setFormData({ name: '', email: '', message: '' });
-      } else {
-        throw new Error('Fehler beim Senden');
-      }
+      Alert.alert('Erfolg', t('contact.success'));
+      setForm({ name: '', email: '', studium: '', anliegen: '', nachricht: '' });
     } catch (err) {
       Alert.alert('Fehler', t('contact.errorSend'));
     } finally {
@@ -92,184 +58,131 @@ export default function ContactScreen() {
     <View style={styles.container}>
       <Header title={t('contact.title')} subtitle={t('contact.section')} showBack />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
+      <ScrollView
+        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 16 }}
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Description */}
-          <Text style={styles.description}>{t('contact.desc')}</Text>
+        <Text style={styles.introText}>{t('contact.desc')}</Text>
 
-          {/* Direct Contact Card */}
-          <View style={styles.contactCard}>
-            <Text style={styles.contactCardTitle}>{t('contact.directContact')}</Text>
-            
-            <TouchableOpacity style={styles.contactRow} onPress={openEmail}>
-              <Ionicons name="mail-outline" size={18} color={Colors.blue100} />
-              <Text style={styles.contactText}>wirtschaft@oeh.jku.at</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.contactRow}>
-              <Ionicons name="location-outline" size={18} color={Colors.blue100} />
-              <Text style={styles.contactText}>Keplergebäude, JKU Linz</Text>
+        {/* Direct Contact */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('contact.directContact')}</Text>
+          
+          <TouchableOpacity
+            style={styles.contactCard}
+            onPress={() => Linking.openURL('mailto:wirtschaft@oeh.jku.at')}
+          >
+            <View style={[styles.contactIcon, { backgroundColor: Colors.blue50 }]}>
+              <Ionicons name="mail" size={24} color={Colors.blue500} />
             </View>
-
-            <View style={styles.socialRow}>
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={() => openSocialLink('https://www.instagram.com/oeh_wirtschaft_wipaed/')}
-              >
-                <Ionicons name="logo-instagram" size={18} color={Colors.white} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={() => openSocialLink('http://linkedin.com/company/wirtschaft-wipaed')}
-              >
-                <Ionicons name="logo-linkedin" size={18} color={Colors.white} />
-              </TouchableOpacity>
+            <View style={styles.contactContent}>
+              <Text style={styles.contactTitle}>E-Mail</Text>
+              <Text style={styles.contactValue}>wirtschaft@oeh.jku.at</Text>
             </View>
-          </View>
+            <Ionicons name="chevron-forward" size={20} color={Colors.slate300} />
+          </TouchableOpacity>
 
-          {/* Sprechstunden */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionIcon}>
-                <Ionicons name="time-outline" size={24} color={Colors.blue500} />
-              </View>
-              <View>
-                <Text style={styles.sectionTitle}>{t('contact.sprechstunden')}</Text>
-                <Text style={styles.sectionSubtitle}>{t('contact.sprechstundenSub')}</Text>
-              </View>
+          <TouchableOpacity
+            style={styles.contactCard}
+            onPress={() => Linking.openURL('https://oeh.jku.at/wirtschaft')}
+          >
+            <View style={[styles.contactIcon, { backgroundColor: Colors.gold50 }]}>
+              <Ionicons name="globe" size={24} color={Colors.gold500} />
             </View>
+            <View style={styles.contactContent}>
+              <Text style={styles.contactTitle}>Website</Text>
+              <Text style={styles.contactValue}>oeh.jku.at/wirtschaft</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={Colors.slate300} />
+          </TouchableOpacity>
+        </View>
 
-            <Text style={styles.sectionText}>
-              {t('contact.sprechstundenDesc1')}
-            </Text>
-
-            <View style={styles.warningBox}>
-              <Ionicons name="warning-outline" size={16} color={Colors.gold600} />
+        {/* Office Hours */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('contact.sprechstunden')}</Text>
+          <View style={styles.infoCard}>
+            <Ionicons name="calendar-outline" size={20} color={Colors.blue500} />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoTitle}>{t('contact.sprechstundenSub')}</Text>
+              <Text style={styles.infoDesc}>{t('contact.sprechstundenDesc1')}</Text>
               <Text style={styles.warningText}>{t('contact.sprechstundenWarning')}</Text>
             </View>
+          </View>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => Linking.openURL('https://calendly.com/oeh-wirtschaft')}
+          >
+            <Text style={styles.actionButtonText}>{t('contact.sprechstundenBtn')}</Text>
+            <Ionicons name="arrow-forward" size={16} color={Colors.white} />
+          </TouchableOpacity>
+        </View>
 
-            <TouchableOpacity style={styles.primaryButton} onPress={openSprechstunde}>
-              <Ionicons name="calendar-outline" size={18} color={Colors.white} />
-              <Text style={styles.primaryButtonText}>{t('contact.sprechstundenBtn')}</Text>
-            </TouchableOpacity>
+        {/* WhatsApp */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('contact.whatsapp')}</Text>
+          <View style={styles.infoCard}>
+            <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoTitle}>{t('contact.whatsappSub')}</Text>
+              <Text style={styles.infoDesc}>{t('contact.whatsappDesc1')}</Text>
+              <Text style={styles.joinTitle}>{t('contact.whatsappJoinTitle')}</Text>
+              <Text style={styles.infoDesc}>{t('contact.whatsappJoinDesc')}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Contact Form */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('contact.formTitle')}</Text>
+          
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>{t('contact.name')} *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder={t('contact.namePh')}
+              placeholderTextColor={Colors.slate400}
+              value={form.name}
+              onChangeText={(text) => setForm({ ...form, name: text })}
+            />
           </View>
 
-          {/* WhatsApp */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={[styles.sectionIcon, { backgroundColor: Colors.green50 }]}>
-                <Ionicons name="chatbubbles-outline" size={24} color={Colors.green500} />
-              </View>
-              <View>
-                <Text style={styles.sectionTitle}>{t('contact.whatsapp')}</Text>
-                <Text style={styles.sectionSubtitle}>{t('contact.whatsappSub')}</Text>
-              </View>
-            </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>{t('contact.email')} *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder={t('contact.emailPh')}
+              placeholderTextColor={Colors.slate400}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={form.email}
+              onChangeText={(text) => setForm({ ...form, email: text })}
+            />
+          </View>
 
-            <Text style={styles.sectionText}>
-              {t('contact.whatsappDesc1')}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>{t('contact.nachricht')} *</Text>
+            <TextInput
+              style={[styles.input, styles.textarea]}
+              placeholder={t('contact.nachrichtPh')}
+              placeholderTextColor={Colors.slate400}
+              multiline
+              numberOfLines={4}
+              value={form.nachricht}
+              onChangeText={(text) => setForm({ ...form, nachricht: text })}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.submitButton, sending && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={sending}
+          >
+            <Text style={styles.submitButtonText}>
+              {sending ? t('contact.sending') : t('contact.submit')}
             </Text>
-
-            <View style={styles.infoBox}>
-              <Text style={styles.infoBoxTitle}>{t('contact.whatsappJoinTitle')}</Text>
-              <Text style={styles.infoBoxText}>{t('contact.whatsappJoinDesc')}</Text>
-            </View>
-          </View>
-
-          {/* FAQ */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionIcon}>
-                <Ionicons name="help-circle-outline" size={24} color={Colors.blue500} />
-              </View>
-              <View>
-                <Text style={styles.sectionTitle}>{t('contact.faq')}</Text>
-                <Text style={styles.sectionSubtitle}>{t('contact.faqSub')}</Text>
-              </View>
-            </View>
-
-            {faqData.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.faqItem}
-                onPress={() => setExpandedFaq(expandedFaq === index ? null : index)}
-              >
-                <View style={styles.faqHeader}>
-                  <Text style={styles.faqQuestion}>{item.q}</Text>
-                  <Ionicons
-                    name={expandedFaq === index ? 'chevron-up' : 'chevron-down'}
-                    size={18}
-                    color={Colors.slate400}
-                  />
-                </View>
-                {expandedFaq === index && (
-                  <Text style={styles.faqAnswer}>{item.a}</Text>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Contact Form */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('contact.formTitle')}</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>{t('contact.name')} *</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.name}
-                onChangeText={(text) => setFormData({ ...formData, name: text })}
-                placeholder={t('contact.namePh')}
-                placeholderTextColor={Colors.slate400}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>{t('contact.email')} *</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.email}
-                onChangeText={(text) => setFormData({ ...formData, email: text })}
-                placeholder={t('contact.emailPh')}
-                placeholderTextColor={Colors.slate400}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>{t('contact.nachricht')} *</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={formData.message}
-                onChangeText={(text) => setFormData({ ...formData, message: text })}
-                placeholder={t('contact.nachrichtPh')}
-                placeholderTextColor={Colors.slate400}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.submitButton, sending && styles.submitButtonDisabled]}
-              onPress={handleSubmit}
-              disabled={sending}
-            >
-              <Ionicons name="send-outline" size={18} color={Colors.white} />
-              <Text style={styles.submitButtonText}>
-                {sending ? t('contact.sending') : t('contact.submit')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -277,200 +190,138 @@ export default function ContactScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.slate50,
   },
-  description: {
+  introText: {
     fontSize: 15,
-    color: Colors.slate500,
-    lineHeight: 22,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-  },
-  contactCard: {
-    backgroundColor: Colors.blue500,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 20,
-    borderRadius: 16,
-  },
-  contactCardTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: Colors.white,
-    marginBottom: 16,
-  },
-  contactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
-  },
-  contactText: {
-    fontSize: 14,
-    color: Colors.blue100,
-  },
-  socialRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.2)',
-  },
-  socialButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    color: Colors.slate600,
+    lineHeight: 24,
+    marginBottom: 20,
   },
   section: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.slate900,
+    marginBottom: 12,
+  },
+  contactCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 8,
-    borderRadius: 16,
-    marginHorizontal: 16,
     borderWidth: 1,
     borderColor: Colors.slate100,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  sectionIcon: {
+  contactIcon: {
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: Colors.blue50,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
   },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+  contactContent: {
+    flex: 1,
+  },
+  contactTitle: {
+    fontSize: 14,
+    fontWeight: '600',
     color: Colors.slate900,
   },
-  sectionSubtitle: {
+  contactValue: {
     fontSize: 13,
     color: Colors.slate500,
+    marginTop: 2,
   },
-  sectionText: {
+  infoCard: {
+    flexDirection: 'row',
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.slate100,
+  },
+  infoContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  infoTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.slate900,
+    marginBottom: 8,
+  },
+  infoDesc: {
     fontSize: 14,
     color: Colors.slate600,
     lineHeight: 20,
-    marginBottom: 12,
-  },
-  warningBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: Colors.gold50,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.gold200,
-    marginBottom: 16,
   },
   warningText: {
-    flex: 1,
     fontSize: 13,
+    color: Colors.red500,
+    marginTop: 8,
     fontWeight: '500',
-    color: Colors.gold700,
   },
-  primaryButton: {
+  joinTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.slate900,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.blue500,
-    paddingVertical: 14,
-    borderRadius: 24,
-    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 12,
   },
-  primaryButtonText: {
+  actionButtonText: {
     fontSize: 15,
     fontWeight: '600',
     color: Colors.white,
-  },
-  infoBox: {
-    backgroundColor: Colors.slate50,
-    padding: 12,
-    borderRadius: 12,
-  },
-  infoBoxTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.slate700,
-    marginBottom: 4,
-  },
-  infoBoxText: {
-    fontSize: 12,
-    color: Colors.slate500,
-  },
-  faqItem: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.slate100,
-  },
-  faqHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  faqQuestion: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.slate800,
-    paddingRight: 12,
-  },
-  faqAnswer: {
-    fontSize: 13,
-    color: Colors.slate500,
-    lineHeight: 20,
-    marginTop: 8,
+    marginRight: 8,
   },
   inputGroup: {
     marginBottom: 16,
   },
   inputLabel: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
     color: Colors.slate700,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   input: {
     backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    color: Colors.slate900,
     borderWidth: 1,
     borderColor: Colors.slate200,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: Colors.slate900,
   },
-  textArea: {
-    minHeight: 100,
-    paddingTop: 12,
+  textarea: {
+    minHeight: 120,
+    textAlignVertical: 'top',
   },
   submitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: Colors.blue500,
-    paddingVertical: 14,
-    borderRadius: 24,
-    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
   },
   submitButtonDisabled: {
     backgroundColor: Colors.slate300,
   },
   submitButtonText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     color: Colors.white,
   },

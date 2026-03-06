@@ -1,5 +1,5 @@
 /**
- * Empty State Component
+ * EmptyState Component
  */
 
 import React from 'react';
@@ -7,18 +7,12 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
 
-interface EmptyStateProps {
-  icon: keyof typeof Ionicons.glyphMap;
-  title;
-  description?;
-}
-
-export default function EmptyState({ icon, title, description }: EmptyStateProps) {
+export default function EmptyState({ icon, title, message }) {
   return (
     <View style={styles.container}>
-      <Ionicons name={icon} size={64} color={Colors.slate300} />
+      <Ionicons name={icon || 'alert-circle-outline'} size={48} color={Colors.slate300} />
       <Text style={styles.title}>{title}</Text>
-      {description && <Text style={styles.description}>{description}</Text>}
+      {message && <Text style={styles.message}>{message}</Text>}
     </View>
   );
 }
@@ -26,12 +20,9 @@ export default function EmptyState({ icon, title, description }: EmptyStateProps
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     padding: 32,
-    backgroundColor: Colors.slate50,
-    borderRadius: 16,
-    margin: 16,
   },
   title: {
     fontSize: 18,
@@ -40,7 +31,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: 'center',
   },
-  description: {
+  message: {
     fontSize: 14,
     color: Colors.slate500,
     marginTop: 8,

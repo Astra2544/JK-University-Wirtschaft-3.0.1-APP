@@ -1,6 +1,5 @@
 /**
  * LVAScreen - LVA-Suche & Bewertungen
- * 1:1 Kopie der Website LVA-Seite
  */
 
 import React, { useEffect, useState } from 'react';
@@ -12,7 +11,6 @@ import {
   TextInput,
   TouchableOpacity,
   RefreshControl,
-  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -24,31 +22,74 @@ import Header from '../components/Header';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
 
-interface LVA {
-  id;
-  name;
-  professor?;
-  avg_effort;
-  avg_difficulty;
-  avg_rating;
-  rating_count;
+function RatingStars({ rating }) {
+  const stars = [];
+  const fullStars = Math.floor(rating);
+  const hasHalf = rating % 1 >= 0.5;
+
+  for (let i = 0; i < 5; i++) {
+    if (i < fullStars) {
+      stars.push(<Ionicons key={i} name="star" size={14} color={Colors.gold500} />);
+    } else if (i === fullStars && hasHalf) {
+      stars.push(<Ionicons key={i} name="star-half" size={14} color={Colors.gold500} />);
+    } else {
+      stars.push(<Ionicons key={i} name="star-outline" size={14} color={Colors.slate300} />);
+    }
+  }
+
+  return <View style={styles.starsContainer}>{stars}</View>;
 }
 
-interface TopLVAs {
-  best: LVA[];
-  hardest: LVA[];
+function LVACard({ lva, type }) {
+  const isTop = type === 'best';
+  
+  return (
+    <View style={[styles.lvaCard, isTop && styles.lvaCardTop]}>
+      <View style={styles.lvaHeader}>
+        <Text style={styles.lvaName} numberOfLines={2}>{lva.name}</Text>
+        {lva.professor && (
+          <Text style={styles.lvaProfessor}>{lva.professor}</Text>
+        )}
+      </View>
+      
+      <View style={styles.lvaStats}>
+        <View style={styles.statItem}>
+          <Text style={styles.statLabel}>{type === 'best' ? 'Bewertung' : 'Schwierigkeit'}</Text>
+          <View style={styles.statValue}>
+            <RatingStars rating={type === 'best' ? lva.avg_rating : lva.avg_difficulty} />
+            <Text style={styles.statNumber}>
+              {(type === 'best' ? lva.avg_rating : lva.avg_difficulty)?.toFixed(1) || '-'}
+            </Text>
+          </View>
+        </View>
+        
+        <View style={styles.statItem}>
+          <Text style={styles.statLabel}>Aufwand</Text>
+          <Text style={[styles.statNumber, { color: Colors.slate600 }]}>
+            {lva.avg_effort?.toFixed(1) || '-'}/5
+          </Text>
+        </View>
+        
+        <View style={styles.statItem}>
+          <Text style={styles.statLabel}>Bewertungen</Text>
+          <Text style={[styles.statNumber, { color: Colors.slate600 }]}>
+            {lva.rating_count || 0}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
 }
 
 export default function LVAScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<LVA[]>([]);
-  const [topLVAs, setTopLVAs] = useState<TopLVAs>({ best: [], hardest: [] });
+  const [searchResults, setSearchResults] = useState([]);
+  const [topLVAs, setTopLVAs] = useState({ best: [], hardest: [] });
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedLVA, setSelectedLVA] = useState<LVA | null>(null);
 
   useEffect(() => {
     fetchTopLVAs();
@@ -56,8 +97,8 @@ export default function LVAScreen() {
 
   const fetchTopLVAs = async () => {
     try {
-      const data = await apiFetch<TopLVAs>(ENDPOINTS.LVAS_TOP);
-      setTopLVAs(data);
+      const data = await apiFetch(ENDPOINTS.LVAS_TOP);
+      setTopLVAs(data || { best: [], hardest: [] });
     } catch (err) {
       console.error('Error fetching top LVAs:', err);
     } finally {
@@ -66,16 +107,21 @@ export default function LVAScreen() {
     }
   };
 
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchTopLVAs();
+  };
+
   const searchLVAs = async (query) => {
-    if (query.length < 2) {
+    if (!query.trim()) {
       setSearchResults([]);
       return;
     }
-
+    
     setSearching(true);
     try {
-      const data = await apiFetch<LVA[]>(`${ENDPOINTS.LVAS}?search=${encodeURIComponent(query)}`);
-      setSearchResults(data);
+      const data = await apiFetch(`${ENDPOINTS.LVAS}?search=${encodeURIComponent(query)}`);
+      setSearchResults(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error searching LVAs:', err);
       setSearchResults([]);
@@ -84,199 +130,105 @@ export default function LVAScreen() {
     }
   };
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchTopLVAs();
-  };
-
-  const handleSearch = (text) => {
-    setSearchQuery(text);
-    searchLVAs(text);
-  };
-
-  const renderRating = (value, label) => (
-    <View style={styles.ratingItem}>
-      <Text style={styles.ratingValue}>{value.toFixed(1)}</Text>
-      <Text style={styles.ratingLabel}>{label}</Text>
-    </View>
-  );
-
-  const LVACard = ({ lva }: { lva: LVA }) => (
-    <TouchableOpacity
-      style={styles.lvaCard}
-      onPress={() => setSelectedLVA(lva)}
-    >
-      <View style={styles.lvaHeader}>
-        <Text style={styles.lvaName} numberOfLines={2}>{lva.name}</Text>
-        <View style={styles.ratingBadge}>
-          <Text style={styles.ratingBadgeText}>{lva.avg_rating.toFixed(1)}</Text>
-        </View>
-      </View>
-      {lva.professor && (
-        <Text style={styles.lvaProfessor}>{lva.professor}</Text>
-      )}
-      <View style={styles.lvaRatings}>
-        {renderRating(lva.avg_effort, t('lva.aufwand'))}
-        {renderRating(lva.avg_difficulty, t('lva.schwierigkeit'))}
-      </View>
-      <Text style={styles.lvaRatingCount}>
-        {t(lva.rating_count === 1 ? 'lva.ratingCount_one' : 'lva.ratingCount_other', { count: lva.rating_count })}
-      </Text>
-    </TouchableOpacity>
-  );
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchLVAs(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   return (
     <View style={styles.container}>
       <Header title={t('lva.title')} subtitle={t('lva.section')} showBack />
 
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.blue500]} />
-        }
-      >
-        {/* Description */}
-        <Text style={styles.description}>{t('lva.desc')}</Text>
-
-        {/* How it works */}
-        <View style={styles.howItWorks}>
-          <Text style={styles.howItWorksTitle}>{t('lva.howItWorks')}</Text>
-          <View style={styles.howStep}>
-            <Ionicons name="mail-outline" size={16} color={Colors.blue500} />
-            <Text style={styles.howStepText}>{t('lva.howStep1')}</Text>
-          </View>
-          <View style={styles.howStep}>
-            <Ionicons name="star-outline" size={16} color={Colors.blue500} />
-            <Text style={styles.howStepText}>{t('lva.howStep2')}</Text>
-          </View>
-          <View style={styles.howStep}>
-            <Ionicons name="shield-checkmark-outline" size={16} color={Colors.blue500} />
-            <Text style={styles.howStepText}>{t('lva.howStep3')}</Text>
-          </View>
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={20} color={Colors.slate400} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t('lva.searchPlaceholder')}
+            placeholderTextColor={Colors.slate400}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color={Colors.slate400} />
+            </TouchableOpacity>
+          )}
         </View>
+      </View>
 
-        {/* Search */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchInputWrapper}>
-            <Ionicons name="search-outline" size={20} color={Colors.slate400} />
-            <TextInput
-              style={styles.searchInput}
-              value={searchQuery}
-              onChangeText={handleSearch}
-              placeholder={t('lva.searchPh')}
-              placeholderTextColor={Colors.slate400}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => { setSearchQuery(''); setSearchResults([]); }}>
-                <Ionicons name="close-circle" size={20} color={Colors.slate400} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Search Results */}
-        {searchQuery.length >= 2 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Suchergebnisse ({searchResults.length})</Text>
-            {searching ? (
-              <LoadingSpinner size="small" />
-            ) : searchResults.length === 0 ? (
-              <View style={styles.noResults}>
-                <Text style={styles.noResultsText}>{t('lva.noResults')}</Text>
-              </View>
-            ) : (
-              searchResults.map((lva) => <LVACard key={lva.id} lva={lva} />)
-            )}
-          </View>
-        )}
-
-        {/* Top LVAs */}
-        {searchQuery.length < 2 && !loading && (
-          <>
-            {/* Top Best */}
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        <ScrollView
+          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 16 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.blue500]} />
+          }
+        >
+          {/* Search Results */}
+          {searchQuery.length > 0 ? (
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <View style={[styles.sectionIcon, { backgroundColor: Colors.green50 }]}>
-                  <Ionicons name="trophy" size={20} color={Colors.green500} />
-                </View>
-                <Text style={styles.sectionTitle}>{t('lva.topBest')}</Text>
-              </View>
-              {topLVAs.best.length === 0 ? (
-                <Text style={styles.noDataText}>{t('lva.noRatings')}</Text>
-              ) : (
-                topLVAs.best.map((lva) => <LVACard key={lva.id} lva={lva} />)
-              )}
-            </View>
-
-            {/* Top Hardest */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <View style={[styles.sectionIcon, { backgroundColor: Colors.red50 }]}>
-                  <Ionicons name="flame" size={20} color={Colors.red500} />
-                </View>
-                <Text style={styles.sectionTitle}>{t('lva.topHardest')}</Text>
-              </View>
-              {topLVAs.hardest.length === 0 ? (
-                <Text style={styles.noDataText}>{t('lva.noRatings')}</Text>
-              ) : (
-                topLVAs.hardest.map((lva) => <LVACard key={lva.id} lva={lva} />)
-              )}
-            </View>
-          </>
-        )}
-
-        {loading && <LoadingSpinner />}
-      </ScrollView>
-
-      {/* LVA Detail Modal */}
-      <Modal
-        visible={!!selectedLVA}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setSelectedLVA(null)}
-      >
-        {selectedLVA && (
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{selectedLVA.name}</Text>
-              <TouchableOpacity style={styles.modalClose} onPress={() => setSelectedLVA(null)}>
-                <Ionicons name="close" size={24} color={Colors.slate700} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalBody}>
-              {selectedLVA.professor && (
-                <Text style={styles.modalProfessor}>{selectedLVA.professor}</Text>
-              )}
-
-              <View style={styles.modalRatings}>
-                <View style={styles.modalRatingCard}>
-                  <Text style={styles.modalRatingLabel}>{t('lva.gesamt')}</Text>
-                  <Text style={styles.modalRatingValue}>{selectedLVA.avg_rating.toFixed(1)}</Text>
-                </View>
-                <View style={styles.modalRatingCard}>
-                  <Text style={styles.modalRatingLabel}>{t('lva.aufwand')}</Text>
-                  <Text style={styles.modalRatingValue}>{selectedLVA.avg_effort.toFixed(1)}</Text>
-                </View>
-                <View style={styles.modalRatingCard}>
-                  <Text style={styles.modalRatingLabel}>{t('lva.schwierigkeit')}</Text>
-                  <Text style={styles.modalRatingValue}>{selectedLVA.avg_difficulty.toFixed(1)}</Text>
-                </View>
-              </View>
-
-              <Text style={styles.modalRatingCount}>
-                {t(selectedLVA.rating_count === 1 ? 'lva.ratingCount_one' : 'lva.ratingCount_other', { count: selectedLVA.rating_count })}
+              <Text style={styles.sectionTitle}>
+                {t('lva.results')} ({searchResults.length})
               </Text>
+              {searching ? (
+                <LoadingSpinner size="small" />
+              ) : searchResults.length === 0 ? (
+                <EmptyState icon="search-outline" title={t('lva.noResults')} />
+              ) : (
+                searchResults.map((lva) => (
+                  <LVACard key={lva.id} lva={lva} type="search" />
+                ))
+              )}
+            </View>
+          ) : (
+            <>
+              {/* Top 5 Best */}
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="trophy" size={20} color={Colors.gold500} />
+                  <Text style={styles.sectionTitle}>{t('lva.topBest')}</Text>
+                </View>
+                {topLVAs.best?.slice(0, 5).map((lva, index) => (
+                  <View key={lva.id || index} style={styles.rankContainer}>
+                    <View style={[styles.rankBadge, index < 3 && styles.rankBadgeTop]}>
+                      <Text style={[styles.rankText, index < 3 && styles.rankTextTop]}>
+                        {index + 1}
+                      </Text>
+                    </View>
+                    <View style={styles.rankCard}>
+                      <LVACard lva={lva} type="best" />
+                    </View>
+                  </View>
+                ))}
+              </View>
 
-              <TouchableOpacity style={styles.rateButton}>
-                <Ionicons name="star" size={18} color={Colors.white} />
-                <Text style={styles.rateButtonText}>{t('lva.rate')}</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        )}
-      </Modal>
+              {/* Top 5 Hardest */}
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="fitness" size={20} color={Colors.red500} />
+                  <Text style={styles.sectionTitle}>{t('lva.topHardest')}</Text>
+                </View>
+                {topLVAs.hardest?.slice(0, 5).map((lva, index) => (
+                  <View key={lva.id || index} style={styles.rankContainer}>
+                    <View style={styles.rankBadge}>
+                      <Text style={styles.rankText}>{index + 1}</Text>
+                    </View>
+                    <View style={styles.rankCard}>
+                      <LVACard lva={lva} type="hardest" />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -284,228 +236,117 @@ export default function LVAScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
-  },
-  description: {
-    fontSize: 15,
-    color: Colors.slate500,
-    lineHeight: 22,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-  },
-  howItWorks: {
-    backgroundColor: Colors.blue50,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.blue100,
-  },
-  howItWorksTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.slate800,
-    marginBottom: 12,
-  },
-  howStep: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    marginBottom: 8,
-  },
-  howStepText: {
-    flex: 1,
-    fontSize: 13,
-    color: Colors.slate600,
-    lineHeight: 18,
+    backgroundColor: Colors.slate50,
   },
   searchContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    padding: 16,
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.slate100,
   },
-  searchInputWrapper: {
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.slate50,
+    backgroundColor: Colors.slate100,
     borderRadius: 12,
-    paddingHorizontal: 14,
-    gap: 10,
-    borderWidth: 1,
-    borderColor: Colors.slate200,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 14,
-    fontSize: 15,
+    fontSize: 16,
     color: Colors.slate900,
+    marginLeft: 8,
   },
   section: {
-    paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
-  },
-  sectionIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 16,
   },
   sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.slate900,
+    marginLeft: 8,
+  },
+  rankContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  rankBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.slate200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    marginTop: 16,
+  },
+  rankBadgeTop: {
+    backgroundColor: Colors.gold500,
+  },
+  rankText: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.slate700,
+    color: Colors.slate600,
+  },
+  rankTextTop: {
+    color: Colors.white,
+  },
+  rankCard: {
+    flex: 1,
   },
   lvaCard: {
     backgroundColor: Colors.white,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 10,
     borderWidth: 1,
     borderColor: Colors.slate100,
   },
+  lvaCardTop: {
+    borderColor: Colors.gold100,
+  },
   lvaHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 4,
+    marginBottom: 12,
   },
   lvaName: {
-    flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     color: Colors.slate900,
-    paddingRight: 10,
-  },
-  ratingBadge: {
-    backgroundColor: Colors.blue500,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  ratingBadgeText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.white,
   },
   lvaProfessor: {
     fontSize: 13,
     color: Colors.slate500,
-    marginBottom: 8,
+    marginTop: 4,
   },
-  lvaRatings: {
+  lvaStats: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 8,
+    justifyContent: 'space-between',
   },
-  ratingItem: {
+  statItem: {
     alignItems: 'center',
   },
-  ratingValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.slate800,
-  },
-  ratingLabel: {
-    fontSize: 11,
-    color: Colors.slate400,
-  },
-  lvaRatingCount: {
-    fontSize: 12,
-    color: Colors.slate400,
-  },
-  noResults: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  noResultsText: {
-    fontSize: 14,
-    color: Colors.slate500,
-  },
-  noDataText: {
-    fontSize: 13,
-    color: Colors.slate400,
-    fontStyle: 'italic',
-  },
-  // Modal
-  modalContainer: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 20,
-    paddingTop: 60,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.slate100,
-  },
-  modalTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.slate900,
-    paddingRight: 16,
-  },
-  modalClose: {
-    padding: 4,
-  },
-  modalBody: {
-    flex: 1,
-    padding: 20,
-  },
-  modalProfessor: {
-    fontSize: 15,
-    color: Colors.slate500,
-    marginBottom: 20,
-  },
-  modalRatings: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  modalRatingCard: {
-    flex: 1,
-    backgroundColor: Colors.slate50,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  modalRatingLabel: {
+  statLabel: {
     fontSize: 11,
     color: Colors.slate500,
     marginBottom: 4,
   },
-  modalRatingValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: Colors.slate900,
-  },
-  modalRatingCount: {
-    fontSize: 14,
-    color: Colors.slate500,
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  rateButton: {
+  statValue: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.blue500,
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 8,
   },
-  rateButtonText: {
-    fontSize: 15,
+  starsContainer: {
+    flexDirection: 'row',
+    marginRight: 4,
+  },
+  statNumber: {
+    fontSize: 14,
     fontWeight: '600',
-    color: Colors.white,
+    color: Colors.gold600,
   },
 });

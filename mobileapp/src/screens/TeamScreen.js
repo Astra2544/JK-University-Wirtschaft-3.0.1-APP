@@ -1,9 +1,8 @@
 /**
  * TeamScreen - Team Mitglieder
- * 1:1 Kopie der Website Team-Seite
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -17,19 +16,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 
 import { Colors } from '../constants/Colors';
-import { API_URL, ENDPOINTS } from '../constants/Api';
 import Header from '../components/Header';
 import { CtaCard } from '../components/Card';
 
-// Team Data - 1:1 von der Website
 const vorsitzender = {
   name: 'Maximilian Pilsner',
   email: 'maximilian.pilsner@oeh.jku.at',
   role: 'Vorsitzender',
-  assetKey: 'team/maximilian-pilsner',
 };
 
 const bereichsleiter = [
@@ -65,11 +60,11 @@ const weitereMitglieder = [
   { name: 'Melanie Derntl', role: 'ÖH Wirtschaft' },
 ];
 
-const colorStyles: Record<string, { bg; text; badge }> = {
-  purple: { bg: Colors.purple50, text: Colors.purple500, badge: Colors.purple500 },
+const colorStyles = {
+  purple: { bg: '#F3E8FF', text: '#9333EA', badge: '#9333EA' },
   blue: { bg: Colors.blue50, text: Colors.blue500, badge: Colors.blue500 },
   gold: { bg: Colors.gold50, text: Colors.gold500, badge: Colors.gold500 },
-  pink: { bg: Colors.pink50, text: Colors.pink500, badge: Colors.pink500 },
+  pink: { bg: '#FCE7F3', text: '#EC4899', badge: '#EC4899' },
 };
 
 function getInitials(name) {
@@ -79,7 +74,7 @@ function getInitials(name) {
 export default function TeamScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = () => {
@@ -102,45 +97,42 @@ export default function TeamScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.blue500]} />
         }
       >
-        {/* Description */}
-        <Text style={styles.description}>{t('team.desc')}</Text>
-
         {/* Vorsitzender */}
-        <View style={styles.vorsitzenderCard}>
-          <View style={styles.vorsitzenderAvatar}>
-            <Text style={styles.vorsitzenderInitials}>{getInitials(vorsitzender.name)}</Text>
-          </View>
-          <View style={styles.vorsitzenderContent}>
-            <Text style={styles.vorsitzenderRole}>{vorsitzender.role}</Text>
-            <Text style={styles.vorsitzenderName}>{vorsitzender.name}</Text>
-            <TouchableOpacity
-              style={styles.emailRow}
-              onPress={() => sendEmail(vorsitzender.email)}
-            >
-              <Ionicons name="mail-outline" size={14} color={Colors.blue100} />
-              <Text style={styles.vorsitzenderEmail}>{vorsitzender.email}</Text>
-            </TouchableOpacity>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('team.vorsitz')}</Text>
+          <View style={styles.vorsitzCard}>
+            <View style={styles.vorsitzAvatar}>
+              <Text style={styles.vorsitzInitials}>{getInitials(vorsitzender.name)}</Text>
+            </View>
+            <View style={styles.vorsitzInfo}>
+              <Text style={styles.vorsitzName}>{vorsitzender.name}</Text>
+              <Text style={styles.vorsitzRole}>{vorsitzender.role}</Text>
+              <TouchableOpacity
+                style={styles.emailButton}
+                onPress={() => sendEmail(vorsitzender.email)}
+              >
+                <Ionicons name="mail-outline" size={16} color={Colors.blue500} />
+                <Text style={styles.emailText}>{t('team.email')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
         {/* Bereichsleiter */}
         <View style={styles.section}>
-          <View style={styles.bereichsleiterGrid}>
-            {bereichsleiter.map((person, index) => {
-              const style = colorStyles[person.color] || colorStyles.blue;
+          <Text style={styles.sectionTitle}>{t('team.bereichsleiter')}</Text>
+          <View style={styles.bereichsGrid}>
+            {bereichsleiter.map((member, index) => {
+              const colors = colorStyles[member.color] || colorStyles.blue;
               return (
-                <View key={person.name} style={[styles.bereichsleiterCard, { backgroundColor: style.bg }]}>
-                  <View style={[styles.bereichsleiterBadge, { backgroundColor: style.badge }]}>
-                    <Ionicons
-                      name={person.icon === 'camera' ? 'camera' : person.icon === 'globe' ? 'globe' : 'sparkles'}
-                      size={10}
-                      color={Colors.white}
-                    />
-                    <Text style={styles.bereichsleiterArea}>{person.area}</Text>
+                <View key={index} style={[styles.bereichCard, { backgroundColor: colors.bg }]}>
+                  <View style={[styles.bereichIcon, { backgroundColor: colors.badge }]}>
+                    <Ionicons name={member.icon} size={20} color={Colors.white} />
                   </View>
-                  <Text style={styles.bereichsleiterName}>{person.name}</Text>
-                  <TouchableOpacity onPress={() => sendEmail(person.email)}>
-                    <Text style={styles.bereichsleiterEmail}>{person.email}</Text>
+                  <Text style={styles.bereichArea}>{member.area}</Text>
+                  <Text style={styles.bereichName}>{member.name}</Text>
+                  <TouchableOpacity onPress={() => sendEmail(member.email)}>
+                    <Ionicons name="mail-outline" size={18} color={colors.text} />
                   </TouchableOpacity>
                 </View>
               );
@@ -150,71 +142,48 @@ export default function TeamScreen() {
 
         {/* Stellvertreter */}
         <View style={styles.section}>
-          <View style={styles.stellvertreterGrid}>
-            {stellvertreter.map((person, index) => (
-              <View key={person.name} style={styles.stellvertreterCard}>
-                <View style={[styles.avatar, { backgroundColor: index % 3 === 0 ? Colors.blue100 : index % 3 === 1 ? Colors.gold100 : Colors.purple100 }]}>
-                  <Text style={[styles.avatarText, { color: index % 3 === 0 ? Colors.blue600 : index % 3 === 1 ? Colors.gold600 : Colors.purple500 }]}>
-                    {getInitials(person.name)}
-                  </Text>
-                </View>
-                <View style={styles.stellvertreterContent}>
-                  <Text style={styles.stellvertreterName}>{person.name}</Text>
-                  <Text style={styles.stellvertreterRole}>{person.role}</Text>
-                  <TouchableOpacity onPress={() => sendEmail(person.email)}>
-                    <Text style={styles.stellvertreterEmail}>{person.email}</Text>
-                  </TouchableOpacity>
-                </View>
+          <Text style={styles.sectionTitle}>{t('team.stellvertreter')}</Text>
+          {stellvertreter.map((member, index) => (
+            <View key={index} style={styles.memberCard}>
+              <View style={styles.memberAvatar}>
+                <Text style={styles.memberInitials}>{getInitials(member.name)}</Text>
               </View>
-            ))}
-          </View>
+              <View style={styles.memberInfo}>
+                <Text style={styles.memberName}>{member.name}</Text>
+                <Text style={styles.memberRole}>{member.role}</Text>
+              </View>
+              <TouchableOpacity onPress={() => sendEmail(member.email)}>
+                <Ionicons name="mail-outline" size={20} color={Colors.slate400} />
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
 
         {/* Weitere Mitglieder */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Weitere Mitglieder</Text>
-          <View style={styles.weitereMitgliederGrid}>
-            {weitereMitglieder.map((person, index) => (
-              <View key={person.name} style={styles.kleineMitgliederCard}>
-                <View style={styles.kleineAvatar}>
-                  <Text style={styles.kleineAvatarText}>{getInitials(person.name)}</Text>
+          <Text style={styles.sectionTitle}>{t('team.weitere')}</Text>
+          <View style={styles.weitereGrid}>
+            {weitereMitglieder.map((member, index) => (
+              <View key={index} style={styles.weitereCard}>
+                <View style={styles.weitereAvatar}>
+                  <Text style={styles.weitereInitials}>{getInitials(member.name)}</Text>
                 </View>
-                <View style={styles.kleineMitgliederContent}>
-                  <Text style={styles.kleineMitgliederName}>{person.name}</Text>
-                  <Text style={styles.kleineMitgliederRole}>{person.role}</Text>
-                </View>
+                <Text style={styles.weitereName}>{member.name}</Text>
+                <Text style={styles.weitereRole}>{member.role}</Text>
               </View>
             ))}
           </View>
         </View>
 
-        {/* "Und du?" CTA */}
-        <View style={styles.undDuCard}>
-          <View style={styles.undDuIcon}>
-            <Ionicons name="person-add" size={32} color={Colors.gold600} />
-          </View>
-          <Text style={styles.undDuTitle}>{t('team.andYou')}</Text>
-          <Text style={styles.undDuDesc}>{t('team.andYouDesc')}</Text>
-          <TouchableOpacity
-            style={styles.undDuButton}
+        {/* CTA */}
+        <View style={styles.ctaSection}>
+          <CtaCard
+            title={t('team.ctaTitle')}
+            description={t('team.ctaDesc')}
+            buttonText={t('team.ctaBtn')}
             onPress={() => navigation.navigate('More', { screen: 'Contact' })}
-          >
-            <Text style={styles.undDuButtonText}>{t('team.joinNow')}</Text>
-            <Ionicons name="arrow-forward" size={16} color={Colors.white} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Why Join Section */}
-        <View style={styles.whyJoinSection}>
-          <Text style={styles.whyJoinSubtitle}>{t('team.whyJoin')}</Text>
-          <Text style={styles.whyJoinTitle}>{t('team.whyJoinTitle')}</Text>
-          <TouchableOpacity
-            style={styles.contactButton}
-            onPress={() => navigation.navigate('More', { screen: 'Contact' })}
-          >
-            <Text style={styles.contactButtonText}>{t('team.contactBtn')}</Text>
-            <Ionicons name="arrow-forward" size={16} color={Colors.white} />
-          </TouchableOpacity>
+            variant="gold"
+          />
         </View>
       </ScrollView>
     </View>
@@ -224,284 +193,184 @@ export default function TeamScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
-  },
-  description: {
-    fontSize: 15,
-    color: Colors.slate500,
-    lineHeight: 22,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-  },
-  // Vorsitzender
-  vorsitzenderCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.blue500,
-    marginHorizontal: 16,
-    marginVertical: 12,
-    padding: 20,
-    borderRadius: 16,
-    gap: 16,
-  },
-  vorsitzenderAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  vorsitzenderInitials: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.white,
-  },
-  vorsitzenderContent: {
-    flex: 1,
-  },
-  vorsitzenderRole: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.gold400,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  vorsitzenderName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.white,
-    marginBottom: 4,
-  },
-  emailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  vorsitzenderEmail: {
-    fontSize: 13,
-    color: Colors.blue100,
+    backgroundColor: Colors.slate50,
   },
   section: {
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    padding: 16,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 18,
     fontWeight: '700',
+    color: Colors.slate900,
+    marginBottom: 16,
+  },
+  vorsitzCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.blue100,
+  },
+  vorsitzAvatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.blue500,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  vorsitzInitials: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+  vorsitzInfo: {
+    flex: 1,
+  },
+  vorsitzName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.slate900,
+    marginBottom: 4,
+  },
+  vorsitzRole: {
+    fontSize: 14,
+    color: Colors.blue500,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  emailButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.blue50,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  emailText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.blue500,
+    marginLeft: 6,
+  },
+  bereichsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -6,
+  },
+  bereichCard: {
+    width: '48%',
+    margin: '1%',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+  },
+  bereichIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  bereichArea: {
+    fontSize: 12,
+    fontWeight: '600',
     color: Colors.slate500,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 12,
+    marginBottom: 4,
   },
-  // Bereichsleiter
-  bereichsleiterGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  bereichsleiterCard: {
-    width: '48.5%',
-    padding: 16,
-    borderRadius: 16,
-  },
-  bereichsleiterBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-  },
-  bereichsleiterArea: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: Colors.white,
-    textTransform: 'uppercase',
-  },
-  bereichsleiterName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.slate900,
-    marginBottom: 2,
-  },
-  bereichsleiterEmail: {
-    fontSize: 11,
-    color: Colors.slate400,
-  },
-  // Stellvertreter
-  stellvertreterGrid: {
-    gap: 8,
-  },
-  stellvertreterCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: Colors.white,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.slate100,
-    gap: 12,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  stellvertreterContent: {
-    flex: 1,
-  },
-  stellvertreterName: {
+  bereichName: {
     fontSize: 14,
     fontWeight: '600',
     color: Colors.slate900,
-    marginBottom: 2,
+    textAlign: 'center',
+    marginBottom: 12,
   },
-  stellvertreterRole: {
-    fontSize: 12,
-    color: Colors.slate500,
-    marginBottom: 2,
-  },
-  stellvertreterEmail: {
-    fontSize: 11,
-    color: Colors.slate300,
-  },
-  // Weitere Mitglieder
-  weitereMitgliederGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  kleineMitgliederCard: {
+  memberCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    width: '48.5%',
-    backgroundColor: Colors.slate50,
-    padding: 10,
-    borderRadius: 10,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: Colors.slate100,
-    gap: 10,
   },
-  kleineAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+  memberAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.slate200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  memberInitials: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.slate600,
+  },
+  memberInfo: {
+    flex: 1,
+  },
+  memberName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.slate900,
+  },
+  memberRole: {
+    fontSize: 13,
+    color: Colors.slate500,
+    marginTop: 2,
+  },
+  weitereGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  weitereCard: {
+    width: '48%',
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    marginRight: '2%',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: Colors.slate100,
+  },
+  weitereAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: Colors.slate100,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 8,
   },
-  kleineAvatarText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.slate500,
-  },
-  kleineMitgliederContent: {
-    flex: 1,
-  },
-  kleineMitgliederName: {
+  weitereInitials: {
     fontSize: 12,
-    fontWeight: '500',
-    color: Colors.slate700,
-  },
-  kleineMitgliederRole: {
-    fontSize: 10,
-    color: Colors.slate400,
-  },
-  // Und du?
-  undDuCard: {
-    backgroundColor: Colors.gold50,
-    marginHorizontal: 16,
-    marginVertical: 16,
-    padding: 24,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.gold200,
-    alignItems: 'center',
-  },
-  undDuIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    backgroundColor: Colors.white,
-    borderWidth: 2,
-    borderColor: Colors.gold300,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  undDuTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: Colors.slate900,
-    marginBottom: 8,
-  },
-  undDuDesc: {
-    fontSize: 14,
-    color: Colors.slate600,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  undDuButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.gold500,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 24,
-    gap: 6,
-  },
-  undDuButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.white,
-  },
-  // Why Join
-  whyJoinSection: {
-    backgroundColor: Colors.slate50,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 24,
-    borderRadius: 16,
-  },
-  whyJoinSubtitle: {
-    fontSize: 11,
     fontWeight: '600',
     color: Colors.slate500,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 8,
   },
-  whyJoinTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.slate900,
-    marginBottom: 16,
-    lineHeight: 26,
-  },
-  contactButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.blue500,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 24,
-    gap: 6,
-    alignSelf: 'flex-start',
-  },
-  contactButtonText: {
-    fontSize: 14,
+  weitereName: {
+    fontSize: 13,
     fontWeight: '600',
-    color: Colors.white,
+    color: Colors.slate900,
+    textAlign: 'center',
+  },
+  weitereRole: {
+    fontSize: 11,
+    color: Colors.slate500,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  ctaSection: {
+    padding: 16,
   },
 });

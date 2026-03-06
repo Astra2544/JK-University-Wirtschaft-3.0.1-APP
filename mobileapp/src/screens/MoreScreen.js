@@ -19,22 +19,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
 import Header from '../components/Header';
 
-interface MenuItemProps {
-  icon: keyof typeof Ionicons.glyphMap;
-  title;
-  subtitle?;
-  onPress: () => void;
-  accent?: 'blue' | 'gold' | 'green' | 'purple';
-}
-
-function MenuItem({ icon, title, subtitle, onPress, accent = 'blue' }: MenuItemProps) {
+function MenuItem({ icon, title, subtitle, onPress, accent = 'blue' }) {
   const accentColors = {
     blue: { bg: Colors.blue50, icon: Colors.blue500 },
     gold: { bg: Colors.gold50, icon: Colors.gold500 },
-    green: { bg: Colors.green50, icon: Colors.green500 },
-    purple: { bg: Colors.purple50, icon: Colors.purple500 },
+    green: { bg: '#ECFDF5', icon: '#10B981' },
+    purple: { bg: '#F3E8FF', icon: '#9333EA' },
   };
-  const colors = accentColors[accent];
+  const colors = accentColors[accent] || accentColors.blue;
 
   return (
     <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
@@ -53,137 +45,112 @@ function MenuItem({ icon, title, subtitle, onPress, accent = 'blue' }: MenuItemP
 export default function MoreScreen() {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation();
 
   const toggleLanguage = () => {
     const nextLang = i18n.language === 'de' ? 'en' : 'de';
     i18n.changeLanguage(nextLang);
   };
 
-  const openExternalLink = (url) => {
-    Linking.openURL(url);
-  };
+  const menuItems = [
+    { icon: 'chatbubble-outline', title: t('more.contact'), subtitle: t('more.contactSub'), screen: 'Contact', accent: 'blue' },
+    { icon: 'book-outline', title: t('more.studium'), subtitle: t('more.studiumSub'), screen: 'Studium', accent: 'gold' },
+    { icon: 'trending-up', title: t('more.lva'), subtitle: t('more.lvaSub'), screen: 'LVA', accent: 'green' },
+    { icon: 'newspaper-outline', title: t('more.magazine'), subtitle: t('more.magazineSub'), screen: 'Magazine', accent: 'purple' },
+    { icon: 'calendar-outline', title: t('more.studienplaner'), subtitle: t('more.studienplanerSub'), screen: 'Studienplaner', accent: 'blue' },
+  ];
+
+  const legalItems = [
+    { icon: 'document-text-outline', title: t('more.impressum'), screen: 'Impressum' },
+    { icon: 'shield-checkmark-outline', title: t('more.datenschutz'), screen: 'Datenschutz' },
+  ];
 
   return (
     <View style={styles.container}>
-      <Header title={t('nav.mehr')} subtitle="Navigation" />
+      <Header title={t('more.title')} subtitle={t('more.section')} />
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Main Pages */}
+        {/* Main Menu */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Seiten</Text>
-          
-          <MenuItem
-            icon="chatbubble-outline"
-            title={t('nav.kontakt')}
-            subtitle="Sprechstunden, FAQ, Kontaktformular"
-            onPress={() => navigation.navigate('Contact')}
-            accent="blue"
-          />
-          <MenuItem
-            icon="school-outline"
-            title={t('nav.studium')}
-            subtitle="Studiengänge & Updates"
-            onPress={() => navigation.navigate('Studium')}
-            accent="gold"
-          />
-          <MenuItem
-            icon="trending-up-outline"
-            title={t('nav.lva')}
-            subtitle="LVA-Suche & Bewertungen"
-            onPress={() => navigation.navigate('LVA')}
-            accent="blue"
-          />
-          <MenuItem
-            icon="map-outline"
-            title={t('nav.studienplaner')}
-            subtitle="Studienplaner für alle Studiengänge"
-            onPress={() => navigation.navigate('Studienplaner')}
-            accent="gold"
-          />
-          <MenuItem
-            icon="newspaper-outline"
-            title={t('nav.magazine')}
-            subtitle="Ceteris Paribus Zeitschrift"
-            onPress={() => navigation.navigate('Magazine')}
-            accent="purple"
-          />
+          <Text style={styles.sectionTitle}>{t('more.services')}</Text>
+          {menuItems.map((item, index) => (
+            <MenuItem
+              key={index}
+              icon={item.icon}
+              title={item.title}
+              subtitle={item.subtitle}
+              accent={item.accent}
+              onPress={() => navigation.navigate(item.screen)}
+            />
+          ))}
         </View>
 
         {/* External Links */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Externe Links</Text>
-          
+          <Text style={styles.sectionTitle}>{t('more.external')}</Text>
+          <MenuItem
+            icon="globe-outline"
+            title="ÖH JKU"
+            subtitle="oeh.jku.at/wirtschaft"
+            accent="blue"
+            onPress={() => Linking.openURL('https://oeh.jku.at/wirtschaft')}
+          />
           <MenuItem
             icon="logo-instagram"
             title="Instagram"
             subtitle="@oeh_wirtschaft_wipaed"
-            onPress={() => openExternalLink('https://www.instagram.com/oeh_wirtschaft_wipaed/')}
             accent="purple"
+            onPress={() => Linking.openURL('https://www.instagram.com/oeh_wirtschaft_wipaed/')}
           />
           <MenuItem
             icon="logo-linkedin"
             title="LinkedIn"
-            subtitle="ÖH Wirtschaft"
-            onPress={() => openExternalLink('http://linkedin.com/company/wirtschaft-wipaed')}
+            subtitle="wirtschaft-wipaed"
             accent="blue"
-          />
-          <MenuItem
-            icon="globe-outline"
-            title="ÖH JKU"
-            subtitle="Hauptseite der ÖH"
-            onPress={() => openExternalLink('https://oeh.jku.at')}
-            accent="gold"
+            onPress={() => Linking.openURL('http://linkedin.com/company/wirtschaft-wipaed')}
           />
         </View>
 
-        {/* Legal */}
+        {/* Language Toggle */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Rechtliches</Text>
-          
-          <MenuItem
-            icon="document-text-outline"
-            title="Impressum"
-            onPress={() => navigation.navigate('Impressum')}
-            accent="blue"
-          />
-          <MenuItem
-            icon="shield-checkmark-outline"
-            title="Datenschutz"
-            onPress={() => navigation.navigate('Datenschutz')}
-            accent="blue"
-          />
-        </View>
-
-        {/* Settings */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Einstellungen</Text>
-          
-          <TouchableOpacity style={styles.languageSwitch} onPress={toggleLanguage}>
-            <View style={[styles.menuIcon, { backgroundColor: Colors.blue50 }]}>
-              <Ionicons name="language-outline" size={22} color={Colors.blue500} />
+          <Text style={styles.sectionTitle}>{t('more.settings')}</Text>
+          <TouchableOpacity style={styles.languageToggle} onPress={toggleLanguage}>
+            <View style={styles.languageIcon}>
+              <Ionicons name="language" size={22} color={Colors.blue500} />
             </View>
             <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Sprache / Language</Text>
+              <Text style={styles.menuTitle}>{t('more.language')}</Text>
               <Text style={styles.menuSubtitle}>
                 {i18n.language === 'de' ? 'Deutsch' : 'English'}
               </Text>
             </View>
-            <View style={styles.langToggle}>
-              <Text style={[styles.langOption, i18n.language === 'de' && styles.langOptionActive]}>DE</Text>
-              <Text style={[styles.langOption, i18n.language === 'en' && styles.langOptionActive]}>EN</Text>
+            <View style={styles.languageBadge}>
+              <Text style={styles.languageBadgeText}>{i18n.language.toUpperCase()}</Text>
             </View>
           </TouchableOpacity>
+        </View>
+
+        {/* Legal */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('more.legal')}</Text>
+          {legalItems.map((item, index) => (
+            <MenuItem
+              key={index}
+              icon={item.icon}
+              title={item.title}
+              accent="blue"
+              onPress={() => navigation.navigate(item.screen)}
+            />
+          ))}
         </View>
 
         {/* App Info */}
         <View style={styles.appInfo}>
           <Text style={styles.appName}>ÖH Wirtschaft</Text>
           <Text style={styles.appVersion}>Version 1.0.0</Text>
-          <Text style={styles.appCopyright}>© 2025 ÖH JKU Linz</Text>
         </View>
       </ScrollView>
     </View>
@@ -193,27 +160,27 @@ export default function MoreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.slate50,
   },
   section: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
+    padding: 16,
+    paddingTop: 8,
   },
   sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '600',
     color: Colors.slate500,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 12,
+    marginLeft: 4,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.white,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 8,
     borderWidth: 1,
     borderColor: Colors.slate100,
@@ -224,68 +191,62 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginRight: 12,
   },
   menuContent: {
     flex: 1,
   },
   menuTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     color: Colors.slate900,
-    marginBottom: 2,
   },
   menuSubtitle: {
-    fontSize: 12,
-    color: Colors.slate400,
+    fontSize: 13,
+    color: Colors.slate500,
+    marginTop: 2,
   },
-  languageSwitch: {
+  languageToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.white,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    marginBottom: 8,
+    borderRadius: 12,
+    padding: 16,
     borderWidth: 1,
     borderColor: Colors.slate100,
   },
-  langToggle: {
-    flexDirection: 'row',
-    backgroundColor: Colors.slate100,
-    borderRadius: 20,
-    padding: 4,
+  languageIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: Colors.blue50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
-  langOption: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.slate500,
-    borderRadius: 16,
-  },
-  langOptionActive: {
+  languageBadge: {
     backgroundColor: Colors.blue500,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  languageBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
     color: Colors.white,
   },
   appInfo: {
     alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 16,
+    paddingVertical: 24,
   },
   appName: {
     fontSize: 16,
-    fontWeight: '700',
-    color: Colors.slate900,
-    marginBottom: 4,
+    fontWeight: '600',
+    color: Colors.slate700,
   },
   appVersion: {
     fontSize: 13,
     color: Colors.slate400,
-    marginBottom: 4,
-  },
-  appCopyright: {
-    fontSize: 12,
-    color: Colors.slate300,
+    marginTop: 4,
   },
 });

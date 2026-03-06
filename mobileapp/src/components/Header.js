@@ -9,21 +9,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Colors } from '../constants/Colors';
 
-interface HeaderProps {
-  title?;
-  subtitle?;
-  showBack?;
-  rightComponent?: React.ReactNode;
-  transparent?;
-}
-
 export default function Header({ 
   title, 
   subtitle, 
   showBack = false, 
   rightComponent,
   transparent = false 
-}: HeaderProps) {
+}) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
@@ -65,8 +57,6 @@ export default function Header({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.white,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: Colors.slate100,
   },
@@ -77,21 +67,18 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.slate50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    marginRight: 8,
+    padding: 4,
   },
   titleContainer: {
     flex: 1,
   },
   titleWithBack: {
-    marginLeft: 0,
+    marginLeft: 4,
   },
   subtitleRow: {
     flexDirection: 'row',
@@ -102,23 +89,22 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: Colors.gold500,
+    backgroundColor: Colors.blue500,
     marginRight: 8,
   },
   subtitle: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '600',
-    color: Colors.slate500,
+    color: Colors.blue500,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
     color: Colors.slate900,
-    letterSpacing: -0.5,
   },
   rightComponent: {
-    marginLeft: 12,
+    marginLeft: 16,
   },
 });
