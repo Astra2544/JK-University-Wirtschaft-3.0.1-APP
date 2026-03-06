@@ -1,0 +1,95 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ *  GLOBAL STYLES | OeH Wirtschaft Website
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ *  BESCHREIBUNG:
+ *  Globale Styles mit TailwindCSS und Custom Fonts.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ *  Entwickelt von:     Raphael Boehmer
+ *  Unternehmen:        Astra Capital e.U.
+ *  Website:            https://astra-capital.eu
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Outfit', system-ui, sans-serif;
+  background: #fff;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection { background: rgba(2,148,203,0.15); color: #0f172a; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #f8fafc; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #0294cb; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CUSTOM CURSOR STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Cursor-Hover Klasse für spezielle Elemente */
+.cursor-hover {
+  position: relative;
+}
+
+/* Mix-blend für bessere Sichtbarkeit auf verschiedenen Hintergründen */
+.cursor-dot-blend {
+  mix-blend-mode: difference;
+}
+
+/* Pulse Animation für den Cursor-Ring */
+@keyframes cursor-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Smooth cursor transition für alle interaktiven Elemente */
+a, button, input, textarea, select, 
+[role="button"], [data-cursor-hover], .cursor-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Hover-Effekt verstärken bei interaktiven Elementen */
+a:hover, button:hover, [role="button"]:hover {
+  transform: translateY(-1px);
+}
+
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee {
+  animation: marquee-scroll var(--marquee-speed, 35s) linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.marquee-reverse {
+  animation: marquee-scroll var(--marquee-speed, 35s) linear infinite reverse;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.oehli-scrollbar::-webkit-scrollbar { width: 4px; }
+.oehli-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.oehli-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+.oehli-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
